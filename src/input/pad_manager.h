@@ -1,15 +1,25 @@
-// Manager kontrol touch screen dan layout virtual pad.
-#ifndef STARBLAST_PAD_MANAGER_H
-#define STARBLAST_PAD_MANAGER_H
+#ifndef AZURE_MIRAGE_PAD_MANAGER_H
+#define AZURE_MIRAGE_PAD_MANAGER_H
 
 #include <cstdint>
 #include <GLES3/gl3.h>
 #include <android/input.h>
-#include "command_manager.h"
 
-namespace starblast {
+namespace azure_mirage {
 
 class SpriteRenderer;
+
+constexpr uint32_t BTN_UP     = 1 << 0;
+constexpr uint32_t BTN_DOWN   = 1 << 1;
+constexpr uint32_t BTN_LEFT   = 1 << 2;
+constexpr uint32_t BTN_RIGHT  = 1 << 3;
+constexpr uint32_t BTN_A      = 1 << 4;
+constexpr uint32_t BTN_B      = 1 << 5;
+constexpr uint32_t BTN_C      = 1 << 6;
+constexpr uint32_t BTN_X      = 1 << 7;
+constexpr uint32_t BTN_Y      = 1 << 8;
+constexpr uint32_t BTN_Z      = 1 << 9;
+constexpr uint32_t BTN_START  = 1 << 10;
 
 constexpr uint32_t BTN_ATTACK = 1 << 4;
 constexpr uint32_t BTN_JUMP   = 1 << 5;
@@ -25,6 +35,13 @@ enum class PadMode {
     BATTLE = 2
 };
 
+enum class PadType {
+    ACTION = 0,
+    ARCADE = 1,
+    BVN = 0,
+    MUGEN = 1
+};
+
 class PadManager {
 public:
     static PadManager& getInstance();
@@ -32,14 +49,21 @@ public:
     void setScreenSize(int width, int height);
     void setMode(PadMode mode) {
         m_mode = mode;
-        if (m_mode == PadMode::HIDDEN) m_mask = 0;
+        if (m_mode == PadMode::HIDDEN) {
+            m_mask = 0;
+            m_latchedMask = 0;
+        }
     }
     PadMode getMode() const { return m_mode; }
+
+    void setPadType(PadType type) { m_type = type; }
+    PadType getPadType() const { return m_type; }
 
     bool handleInput(const AInputEvent* event);
     void render(SpriteRenderer* renderer, float alpha = 0.75f);
 
-    uint32_t getMask() const { return m_mask; }
+    uint32_t getMask() const { return m_mask | m_latchedMask; }
+    void clearFrameInput() { m_latchedMask = 0; }
     bool isTouched() const { return m_touching; }
     float getTouchX() const { return m_touchX; }
     float getTouchY() const { return m_touchY; }
@@ -53,7 +77,9 @@ private:
     void ensureTextures();
 
     PadMode m_mode;
+    PadType m_type = PadType::ACTION;
     uint32_t m_mask;
+    uint32_t m_latchedMask;
     bool m_touching;
     float m_touchX;
     float m_touchY;
@@ -79,7 +105,8 @@ private:
         int texW, texH;
         bool inMenu;
     };
-    ActionBtn m_buttons[7];
+    ActionBtn m_actionButtons[7];
+    ActionBtn m_arcadeButtons[6];
 
     float m_startDrawX;
     float m_startDrawY;
