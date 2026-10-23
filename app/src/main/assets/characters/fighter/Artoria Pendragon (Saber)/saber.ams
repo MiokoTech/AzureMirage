@@ -1,0 +1,887 @@
+# Script Logika Pertarungan Azure Mirage (Dikonversi 1:1 dari DoABC saber.swf)
+
+# ==========================================
+# 1. DEFINISI SERANGAN (AttackDef)
+# ==========================================
+[AttackDef "air_slash"]
+damage = 30
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 3
+knockback_y = 6
+hitstun_ms = 700
+guard_break = false
+check_facing = false
+
+[AttackDef "air_dive_slash"]
+damage = 80
+impact_style = "blunt_heavy"
+reaction = "launch"
+knockback_x = 10
+knockback_y = 10
+hitstun_ms = 400
+guard_break = false
+check_facing = false
+
+[AttackDef "slash_1"]
+damage = 20
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 2
+knockback_y = 0
+hitstun_ms = 300
+guard_break = false
+check_facing = false
+
+[AttackDef "slash_2"]
+damage = 30
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 6
+knockback_y = 0
+hitstun_ms = 700
+guard_break = false
+check_facing = false
+
+[AttackDef "slash_3"]
+damage = 50
+impact_style = "slash_fierce"
+reaction = "flinch"
+knockback_x = 3
+knockback_y = 0
+hitstun_ms = 400
+guard_break = false
+check_facing = false
+
+[AttackDef "slash_4"]
+damage = 40
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 2
+knockback_y = 1
+hitstun_ms = 500
+guard_break = false
+check_facing = false
+
+[AttackDef "slash_5"]
+damage = 40
+impact_style = "slash_fierce"
+reaction = "flinch"
+knockback_x = 6
+knockback_y = -7
+hitstun_ms = 700
+guard_break = false
+check_facing = false
+
+[AttackDef "skill_1_slash_1"]
+damage = 40
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 4
+knockback_y = 0
+hitstun_ms = 500
+guard_break = false
+check_facing = false
+
+[AttackDef "skill_1_slash_2"]
+damage = 60
+impact_style = "slash_fierce"
+reaction = "flinch"
+knockback_x = 8
+knockback_y = 0
+hitstun_ms = 700
+guard_break = false
+check_facing = false
+
+[AttackDef "skill_2_flurry_1"]
+damage = 20
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 0
+knockback_y = 0
+hitstun_ms = 400
+guard_break = false
+check_facing = false
+
+[AttackDef "skill_2_flurry_2"]
+damage = 20
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 0
+knockback_y = 0
+hitstun_ms = 400
+guard_break = false
+check_facing = false
+
+[AttackDef "skill_2_flurry_3"]
+damage = 20
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 0
+knockback_y = 0
+hitstun_ms = 400
+guard_break = false
+check_facing = false
+
+[AttackDef "skill_2_finisher"]
+damage = 40
+impact_style = "slash_fierce"
+reaction = "launch"
+knockback_x = -3
+knockback_y = -2
+hitstun_ms = 400
+guard_break = true
+check_facing = false
+
+[AttackDef "special_1_swing"]
+damage = 20
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 2
+knockback_y = 0
+hitstun_ms = 300
+guard_break = false
+check_facing = false
+
+[AttackDef "special_1_wave"]
+damage = 10
+impact_style = "slash"
+reaction = "flinch"
+knockback_x = 10
+knockback_y = 0
+hitstun_ms = 400
+guard_break = false
+check_facing = false
+
+[AttackDef "special_2_rush"]
+damage = 40
+impact_style = "slash_fierce"
+reaction = "flinch"
+knockback_x = 10
+knockback_y = -10
+hitstun_ms = 1000
+guard_break = false
+check_facing = false
+
+[AttackDef "special_2_drop"]
+damage = 60
+impact_style = "slash_fierce"
+reaction = "launch"
+knockback_x = 7
+knockback_y = 10
+hitstun_ms = 1000
+guard_break = false
+check_facing = false
+
+[AttackDef "special_3_parry"]
+damage = 30
+impact_style = "stone"
+reaction = "flinch"
+knockback_x = 0
+knockback_y = 0
+hitstun_ms = 5000
+guard_break = false
+check_facing = false
+
+[AttackDef "special_3_counter_hit"]
+damage = 60
+impact_style = "slash_fierce"
+reaction = "launch"
+knockback_x = 1
+knockback_y = -3
+hitstun_ms = 500
+guard_break = false
+check_facing = false
+
+[AttackDef "grab_1_lock"]
+damage = 0
+impact_style = "grab"
+reaction = "flinch"
+knockback_x = 0
+knockback_y = 0
+hitstun_ms = 1900
+guard_break = true
+check_facing = false
+
+[AttackDef "grab_1_throw"]
+damage = 50
+impact_style = "slash_fierce"
+reaction = "flinch"
+knockback_x = 0
+knockback_y = 0
+hitstun_ms = 1500
+guard_break = false
+check_facing = false
+
+[AttackDef "grab_2_lock"]
+damage = 0
+impact_style = "grab"
+reaction = "flinch"
+knockback_x = 0
+knockback_y = 0
+hitstun_ms = 1900
+guard_break = true
+check_facing = false
+
+[AttackDef "grab_2_burst"]
+damage = 170
+impact_style = "magic_heavy"
+reaction = "launch"
+knockback_x = 30
+knockback_y = -9
+hitstun_ms = 1000
+guard_break = false
+check_facing = false
+
+[AttackDef "super_combo_hit"]
+damage = 10
+impact_style = "magic_light"
+reaction = "flinch"
+knockback_x = 3
+knockback_y = 0
+hitstun_ms = 300
+guard_break = false
+check_facing = false
+
+[AttackDef "super_finisher"]
+damage = 100
+impact_style = "magic_heavy"
+reaction = "launch"
+knockback_x = 10
+knockback_y = -4
+hitstun_ms = 1000
+guard_break = true
+check_facing = false
+
+[AttackDef "super_up_lift"]
+damage = 50
+impact_style = "magic_light"
+reaction = "flinch"
+knockback_x = 5
+knockback_y = -5
+hitstun_ms = 800
+guard_break = false
+check_facing = true
+
+[AttackDef "super_up_blast"]
+damage = 200
+impact_style = "fire"
+reaction = "launch"
+knockback_x = 10
+knockback_y = -8
+hitstun_ms = 0
+guard_break = false
+check_facing = true
+
+[AttackDef "ultimate_lock_hit"]
+damage = 10
+impact_style = "magic_light"
+reaction = "flinch"
+knockback_x = 4
+knockback_y = 0
+hitstun_ms = 1000
+guard_break = true
+check_facing = false
+
+[AttackDef "ultimate_excalibur"]
+damage = 390
+impact_style = "fire"
+reaction = "launch"
+knockback_x = 10
+knockback_y = -10
+hitstun_ms = 2000
+guard_break = true
+check_facing = false
+
+# ==========================================
+# 2. REGISTRASI AKSI STANDAR (Actions "base")
+# ==========================================
+[Actions "base"]
+intro = "intro"
+idle = "idle"
+walk = "walk"
+dash = "dash"
+jump_start = "jump_start"
+jump = "jump"
+jump_mid = "jump_mid"
+fall = "fall"
+land = "land"
+guard = "guard"
+guard_recover = "guard_recover"
+hurt = "hurt"
+launch = "launch"
+launch_fall = "launch_fall"
+launch_bounce = "launch_bounce"
+down_lie = "down_lie"
+down_getup = "down_getup"
+recover = "recover"
+win = "win"
+lose = "lose"
+attack = "attack_1"
+attack_air = "air_attack"
+skill_1 = "skill_1"
+skill_2 = "skill_2"
+skill_air = "air_skill"
+special_1 = "special_1"
+special_2 = "special_2"
+special_3 = "special_3"
+grab_1 = "grab_1"
+grab_2 = "grab_2"
+super_skill = "super_skill", 100
+super_skill_up = "super_skill_up", 100
+ultimate_skill = "ultimate_skill", 300
+
+# ==========================================
+# 3. JARAK SERANG AI (AI Sensor Ranges)
+# ==========================================
+[AI]
+
+# ==========================================
+# 4. DEFINISI PELURU (Bullet) & SUMMON (Summon)
+# ==========================================
+[Bullet "special_1_wave_bullet"]
+anim = "bullet_special_1_wave"
+hit_anim = "bullet_special_1_wave_hit"
+attack = "special_1_swing"
+start_vx = 14.0
+start_vy = 0.0
+hit_vx = 3.0
+hold_seconds = 20.0
+max_hits = 5
+hp = 250
+
+[Summon "counter_slash_fx"]
+anim = "summon_counter_slash"
+follow_target = true
+apply_gravity = false
+  on_frame 21:
+    end_summon()
+
+[Summon "grab_1_slash_fx"]
+anim = "summon_grab_1_slash"
+follow_target = true
+apply_gravity = false
+  on_frame 2:
+    play_sound("sfx_0581")
+  on_frame 8:
+    end_summon()
+
+# ==========================================
+# 5. LOGIKA TIMELINE PER ANIMASI
+# ==========================================
+[Timeline "walk"]
+  on_frame 4:
+    fx_dust("walk")
+  on_frame 9:
+    fx_dust("walk")
+  on_frame 14:
+    fx_dust("walk")
+  on_frame 17:
+    play_anim("walk", loop = true)
+
+[Timeline "dash"]
+  on_frame 1:
+    fx_afterimage(r = 0, g = 0, b = 255)
+  on_frame 2:
+    dash_start(2.5)
+    allow_cancel("super_skill", target = "super_skill", cost = 100)
+    allow_cancel("super_skill_up", target = "super_skill_up", cost = 100)
+    allow_cancel("ultimate_skill", target = "ultimate_skill", cost = 300)
+    fx_dust("dash")
+  on_frame 3:
+    allow_cancel("attack", target = "attack_3_strike")
+  on_frame 9:
+    dash_stop()
+  on_frame 10:
+    return_idle()
+
+[Timeline "land"]
+  on_frame 5:
+    return_idle()
+
+[Timeline "air_attack"]
+  on_frame 1:
+    set_air_move(true)
+    set_gravity_enabled(false)
+  on_frame 5:
+    play_sound("sfx_0108")
+  on_frame 6:
+    set_velocity(-5, -5)
+    set_damping(0.2, 0.2)
+  on_frame 10:
+    allow_cancel("skill_air", target = "air_skill")
+  on_frame 17:
+    return_idle()
+
+[Timeline "air_skill_legacy"]
+  on_frame 1:
+    set_gravity_enabled(false)
+
+[Timeline "air_skill"]
+  on_frame 1:
+    play_sound("sfx_0139")
+  on_frame 2:
+    play_sound("sfx_0159")
+    add_energy(5)
+    on_land(target = "air_skill_land", end_action = true)
+    set_gravity_enabled(true)
+    set_velocity_percent(-0.5, -0.5)
+    fx_afterimage(r = 0, g = 0, b = 255)
+  on_frame 4:
+    set_velocity_percent(2, 1.5)
+  on_frame 6:
+    play_anim("air_skill_loop", loop = true)
+
+[Timeline "air_skill_loop"]
+  on_frame 7:
+    play_anim("air_skill_loop", loop = true)
+
+[Timeline "air_skill_land"]
+  on_frame 1:
+    fx_stop_afterimage()
+  on_frame 5:
+    return_idle()
+
+[Timeline "attack_1"]
+  on_frame 3:
+    play_sound("sfx_0170")
+  on_frame 4:
+    play_sound("sfx_0176")
+    set_velocity_percent(0.25, 0)
+  on_frame 8:
+    allow_cancel("attack", target = "attack_2")
+    stop_move()
+  on_frame 13:
+    return_idle()
+
+[Timeline "attack_2"]
+  on_frame 3:
+    play_sound("sfx_0185")
+  on_frame 4:
+    play_sound("sfx_0108")
+    set_velocity_percent(0.5, 0)
+  on_frame 11:
+    allow_cancel("attack", target = "attack_3")
+    allow_cancel("skill_2", target = "skill_2_quick")
+    allow_cancel("special_1", target = "special_1_fire")
+    stop_move()
+  on_frame 15:
+    end_action()
+  on_frame 16:
+    return_idle()
+
+[Timeline "attack_3"]
+  on_frame 4:
+    play_sound("sfx_0211")
+  on_frame 7:
+    play_anim("attack_3_strike")
+
+[Timeline "attack_3_strike"]
+  on_frame 1:
+    play_sound("sfx_0159")
+    set_velocity_percent(2.5, 0)
+    set_damping_percent(0.1, 0)
+    set_body_pass(true)
+    fx_dust("dash")
+  on_frame 6:
+    allow_cancel("dash", target = "dash")
+    allow_cancel("skill_1", target = "skill_1")
+    allow_cancel("special_2", target = "special_2")
+    allow_cancel("attack", target = "attack_4")
+  on_frame 11:
+    end_action()
+    allow_cancel("dash", target = "dash")
+  on_frame 20:
+    return_idle()
+
+[Timeline "attack_4"]
+  on_frame 1:
+    face_target()
+  on_frame 7:
+    set_velocity_percent(2, 0)
+    set_damping_percent(0.2, 0)
+  on_frame 8:
+    play_sound("sfx_0260")
+  on_frame 9:
+    play_sound("sfx_0266")
+  on_frame 13:
+    allow_cancel("ultimate_skill", target = "ultimate_skill", cost = 300)
+  on_frame 16:
+    allow_cancel("skill_1", target = "skill_1")
+    allow_cancel("attack", target = "attack_5")
+  on_frame 18:
+    end_action()
+  on_frame 21:
+    return_idle()
+
+[Timeline "attack_5"]
+  on_frame 3:
+    play_sound("sfx_0280")
+    play_sound("sfx_0281")
+    set_velocity_percent(1.2, 0)
+    set_damping_percent(0.1, 0)
+  on_frame 8:
+    allow_cancel("super_skill_up", target = "super_skill_up", cost = 100)
+    allow_cancel("special_2", target = "special_2_followup")
+    allow_cancel("jump", target = "jump_start")
+  on_frame 13:
+    end_action()
+    allow_cancel("jump", target = "jump_start")
+  on_frame 21:
+    return_idle()
+
+[Timeline "skill_1"]
+  on_frame 1:
+    on_sensor_hit("kj10_sensor", target = "skill_1_followup")
+    set_velocity_percent(2, 0)
+    fx_dust("dash")
+  on_frame 2:
+    add_energy(10)
+  on_frame 8:
+    set_damping_percent(0.3, 0)
+  on_frame 11:
+    end_action()
+    stop_move()
+  on_frame 15:
+    return_idle()
+
+[Timeline "skill_1_followup"]
+  on_frame 1:
+    stop_move()
+  on_frame 2:
+    play_sound("sfx_0108")
+  on_frame 7:
+    set_velocity_percent(1.2, 0)
+    set_damping_percent(0.1, 0)
+  on_frame 9:
+    fx_stop_afterimage()
+  on_frame 11:
+    play_sound("sfx_0315")
+  on_frame 12:
+    play_sound("sfx_0108")
+  on_frame 15:
+    allow_cancel("super_skill", target = "super_skill", cost = 100)
+    allow_cancel("skill_2", target = "skill_2_quick")
+  on_frame 18:
+    end_action()
+  on_frame 28:
+    return_idle()
+
+[Timeline "skill_2"]
+  on_frame 2:
+    play_sound("sfx_0346")
+  on_frame 4:
+    play_anim("skill_2_quick")
+
+[Timeline "skill_2_quick"]
+  on_frame 1:
+    fx_dust("dash")
+  on_frame 2:
+    set_body_pass(true)
+    move_once(140, 0)
+  on_frame 4:
+    play_sound("sfx_0176")
+  on_frame 12:
+    move_once(-140, 0)
+  on_frame 13:
+    fx_dust("dash")
+  on_frame 14:
+    move_once(140, 0)
+  on_frame 17:
+    play_sound("sfx_0176")
+  on_frame 23:
+    play_sound("sfx_0372")
+  on_frame 25:
+    move_once(-140, 0)
+  on_frame 26:
+    fx_dust("dash")
+  on_frame 27:
+    move_once(140, 0)
+  on_frame 30:
+    play_sound("sfx_0176")
+  on_frame 38:
+    move_once(-140, 0)
+  on_frame 39:
+    fx_dust("dash")
+  on_frame 40:
+    move_once(140, 0)
+  on_frame 43:
+    play_sound("sfx_0108")
+    fx_screen_flash(color = 0xFFFFFF)
+  on_frame 51:
+    end_action()
+  on_frame 61:
+    return_idle()
+
+[Timeline "skill_2_legacy"]
+  on_frame 2:
+    add_energy(10)
+  on_frame 4:
+    play_sound("sfx_0387")
+  on_frame 5:
+    set_velocity_percent(1, 0)
+  on_frame 11:
+    play_sound("sfx_0396")
+    set_damping_percent(0.05, 0)
+  on_frame 18:
+    play_sound("sfx_0396")
+  on_frame 24:
+    play_sound("sfx_0407")
+  on_frame 25:
+    play_sound("sfx_0159")
+  on_frame 29:
+    allow_cancel("super_skill_up", target = "super_skill_up", cost = 100)
+    allow_cancel("special_3", target = "special_3")
+    allow_cancel("dash", target = "dash")
+  on_frame 36:
+    end_action()
+  on_frame 42:
+    return_idle()
+
+[Timeline "special_1"]
+  on_frame 2:
+    play_sound("sfx_0428")
+    add_energy(5)
+    set_velocity_percent(1, 0)
+    set_damping_percent(0.2, 0)
+  on_frame 11:
+    play_anim("special_1_fire")
+
+[Timeline "special_1_fire"]
+  on_frame 3:
+    play_sound("sfx_0281")
+    play_sound("sfx_0443")
+  on_frame 5:
+    spawn_bullet("special_1_wave_bullet", offset_x = 16.75, offset_y = -43.75)
+  on_frame 9:
+    allow_cancel("special_2", target = "special_2")
+    allow_cancel("super_skill", target = "super_skill", cost = 100)
+  on_frame 22:
+    end_action()
+  on_frame 26:
+    return_idle()
+
+[Timeline "special_2"]
+  on_frame 1:
+    fx_slow_motion(seconds = 1)
+  on_frame 2:
+    add_energy(10)
+  on_frame 3:
+    fx_dust("dash")
+  on_frame 4:
+    move_to_target(100, 0, align = true)
+  on_frame 7:
+    set_velocity_percent(2, 0)
+    set_damping_percent(0.3, 0)
+  on_frame 8:
+    play_sound("sfx_0495")
+    play_sound("sfx_0496")
+    fx_screen_flash(color = 0xFFFFFF)
+  on_frame 18:
+    branch_if_just_hit("special_2_rush", target = "special_2_followup", include_guard = false)
+    branch_if_just_hit("special_1_swing", target = "special_2_followup", include_guard = false)
+  on_frame 20:
+    end_action()
+  on_frame 26:
+    return_idle()
+
+[Timeline "special_2_followup"]
+  on_frame 1:
+    set_gravity_enabled(false)
+    fx_dust("dash")
+    fx_slow_motion(seconds = 0.7)
+  on_frame 3:
+    move_to_target(150, -100, align = true)
+  on_frame 4:
+    play_sound("sfx_0529")
+  on_frame 5:
+    play_sound("sfx_0530")
+    fx_screen_flash(color = 0xFFFFFF)
+  on_frame 12:
+    return_idle()
+
+[Timeline "special_3"]
+  on_frame 2:
+    add_energy(10)
+    set_hurt_anim("counter_attack")
+  on_frame 3:
+    play_sound("sfx_0534")
+  on_frame 17:
+    end_action()
+  on_frame 26:
+    return_idle()
+
+[Timeline "counter_attack"]
+  on_frame 1:
+    play_sound("sfx_0541")
+    set_body_pass(true)
+    fx_slow_motion(seconds = 2)
+  on_frame 2:
+    play_sound("sfx_0542")
+  on_frame 3:
+    set_velocity_percent(2.5, 0)
+    set_damping_percent(0.1, 0)
+    fx_screen_flash(color = 0xFFFFFF)
+  on_frame 7:
+    spawn_summon("counter_slash_fx", follow_target = true, offset_x = 0.0, offset_y = 0.0, apply_gravity = false)
+  on_frame 19:
+    return_idle()
+
+[Timeline "grab_1"]
+  on_frame 2:
+    add_energy(10)
+  on_frame 7:
+    play_sound("sfx_0572")
+  on_frame 15:
+    play_sound("sfx_0396")
+  on_frame 16:
+    fx_screen_flash(color = 0xFFFFFF)
+  on_frame 20:
+    fx_slow_motion(seconds = 1)
+    spawn_summon("grab_1_slash_fx", follow_target = true, offset_x = 0.0, offset_y = 0.0, apply_gravity = false)
+  on_frame 25:
+    return_idle()
+
+[Timeline "grab_2"]
+  on_frame 2:
+    add_energy(20)
+  on_frame 15:
+    play_sound("sfx_0597")
+  on_frame 17:
+    play_sound("sfx_0176")
+  on_frame 18:
+    play_sound("sfx_0602")
+    fx_camera_shake(amp_x = 5, amp_y = 5)
+  on_frame 40:
+    return_idle()
+
+[Timeline "super_skill"]
+  on_frame 1:
+    play_sound("sfx_0679")
+  on_frame 4:
+    fx_super_cutin(is_ultimate = false, portrait = "cutin_saber1")
+  on_frame 12:
+    play_sound("sfx_0680")
+  on_frame 14:
+    play_sound("sfx_0733")
+  on_frame 15:
+    play_sound("sfx_0734")
+  on_frame 30:
+    fx_end_cutin()
+  on_frame 32:
+    play_sound("sfx_0735")
+  on_frame 34:
+    play_sound("sfx_0852")
+    play_sound("sfx_0602")
+    set_velocity_percent(2, 0)
+    set_damping_percent(0.2, 0)
+  on_frame 36:
+    fx_screen_flash(color = 0xFFFFFF)
+  on_frame 61:
+    play_sound("sfx_0735")
+  on_frame 79:
+    play_sound("sfx_0735")
+  on_frame 96:
+    play_sound("sfx_0735")
+  on_frame 146:
+    end_action()
+  on_frame 154:
+    return_idle()
+
+[Timeline "super_skill_up"]
+  on_frame 2:
+    fx_super_cutin(is_ultimate = false, portrait = "cutin_saber1")
+  on_frame 7:
+    play_sound("sfx_0868")
+  on_frame 9:
+    play_sound("sfx_0679")
+  on_frame 28:
+    set_velocity_percent(0.5, 0)
+    set_damping(0.3, 0)
+    fx_end_cutin()
+  on_frame 32:
+    play_sound("sfx_0967")
+    fx_screen_flash(color = 0xFFFFFF)
+  on_frame 33:
+    play_sound("sfx_1019")
+    fx_camera_shake(amp_x = 5, amp_y = 5)
+  on_frame 34:
+    play_sound("sfx_1023")
+    play_sound("sfx_1024")
+  on_frame 62:
+    return_idle()
+
+[Timeline "ultimate_skill"]
+  on_frame 1:
+    play_sound("sfx_1027")
+  on_frame 2:
+    play_sound("sfx_1028")
+  on_frame 3:
+    fx_super_cutin(is_ultimate = true, portrait = "cutin_saber1")
+  on_frame 8:
+    play_sound("sfx_0679")
+  on_frame 9:
+    play_sound("sfx_0443")
+  on_frame 112:
+    play_sound("sfx_0443")
+  on_frame 175:
+    fx_end_cutin()
+  on_frame 177:
+    fx_screen_flash(color = 0xFFFFFF)
+    fx_screen_flash(color = 0x049FF7)
+  on_frame 180:
+    play_sound("sfx_0967")
+    fx_camera_shake(amp_x = 5, amp_y = 5)
+  on_frame 184:
+    play_sound("sfx_1019")
+  on_frame 185:
+    play_sound("sfx_1024")
+  on_frame 293:
+    return_idle()
+
+[Timeline "down_getup"]
+  on_frame 5:
+    return_idle()
+
+[Timeline "recover"]
+  on_frame 1:
+    play_sound("sfx_1362")
+  on_frame 2:
+    set_velocity_percent(-1, 0)
+    set_damping_percent(-0.1, 0)
+  on_frame 12:
+    return_idle()
+
+[Timeline "intro"]
+  on_frame 2:
+    play_sound("sfx_1367")
+  on_frame 5:
+    play_sound("sfx_0396")
+  on_frame 16:
+    play_sound("sfx_0602")
+  on_frame 30:
+    play_sound("sfx_0387")
+  on_frame 42:
+    play_sound("sfx_0176")
+  on_frame 54:
+    return_idle()
+
+[Timeline "win"]
+  on_frame 1:
+    play_sound("sfx_1451")
+  on_frame 20:
+    stop_timeline()
+
+[Timeline "lose"]
+  on_frame 12:
+    stop_timeline()
+
+[Timeline "awakening_unused"]
+  on_frame 5:
+    fx_awaken_cutin(portrait = "cutin_awaken")
+  on_frame 24:
+    play_sound("sfx_1467")
+    fx_screen_flash(color = 0xFFFF00)
+    fx_camera_shake(amp_x = 0, amp_y = 3)
+  on_frame 139:
+    transform_form("awakened_1")

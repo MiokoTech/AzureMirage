@@ -1,0 +1,34 @@
+# Konfigurasi Karakter Azure Mirage (Dikonversi otomatis 1:1 dari saber.swf)
+[Character]
+id = "Artoria Pendragon (Saber)"
+name = "Artoria Pendragon"
+author = "MiokoTech"
+version = "1.0"
+scale = 2.0
+default_form = "base"
+
+[Assets]
+sprites = "saber.amp"
+animation = "saber.ama"
+script = "saber.ams"
+audio = "saber.amv"
+cache = "saber.amc"
+
+[Portraits]
+icon = "face.png"
+lifebar = "face_bar.png"
+select = "face_big.png"
+victory = "face_win.png"
+cutin_super_1 = "cutin_saber1.png"
+cutin_super_2 = "cutin_saber2.png"
+
+[Form "base"]
+max_hp = 1000
+max_stamina = 100
+move_speed = 10
+jump_force = 16
+weight = 3
+guard_style = "blade"
+hurt_voices = ["voice_hurt_1", "voice_hurt_2"]
+launch_voices = ["voice_launch_1"]
+ko_voices = ["voice_ko_1"]
