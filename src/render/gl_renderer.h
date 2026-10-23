@@ -1,12 +1,12 @@
 // Manager context OpenGL ES 3.0 dan EGL display.
-#ifndef STARBLAST_GL_RENDERER_H
-#define STARBLAST_GL_RENDERER_H
+#ifndef AZURE_MIRAGE_GL_RENDERER_H
+#define AZURE_MIRAGE_GL_RENDERER_H
 
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <android/native_window.h>
 
-namespace starblast {
+namespace azure_mirage {
 
 class GLRenderer {
 public:

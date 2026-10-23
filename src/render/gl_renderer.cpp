@@ -1,12 +1,9 @@
+// Pengelola konteks EGL dan perenderan OpenGL ES 3.0.
 #include "gl_renderer.h"
-#include <android/log.h>
+#include "debugger.h"
 #include <vector>
 
-#define LOG_TAG "StarblastGL"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
-
-namespace starblast {
+namespace azure_mirage {
 
 static const char* VERTEX_SHADER =
     "#version 300 es\n"
@@ -49,7 +46,7 @@ GLuint GLRenderer::compileShader(GLenum type, const char* src) {
     if (!status) {
         char log[512];
         glGetShaderInfoLog(s, sizeof(log), nullptr, log);
-        LOGE("Shader compile error: %s", log);
+        SB_LOGE("EGL", "Kompile shader gagal: %s", log);
         glDeleteShader(s);
         return 0;
     }
@@ -60,9 +57,15 @@ bool GLRenderer::initEGL(ANativeWindow* window) {
     m_window = window;
 
     m_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (m_display == EGL_NO_DISPLAY) return false;
+    if (m_display == EGL_NO_DISPLAY) {
+        SB_LOGE("EGL", "Error gak dapat EGL default display");
+        return false;
+    }
 
-    if (!eglInitialize(m_display, nullptr, nullptr)) return false;
+    if (!eglInitialize(m_display, nullptr, nullptr)) {
+        SB_LOGE("EGL", "Error eglInitialize");
+        return false;
+    }
 
     const EGLint attribs[] = {
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
@@ -75,8 +78,9 @@ bool GLRenderer::initEGL(ANativeWindow* window) {
     };
 
     EGLConfig config;
-    EGLint numConfigs;
+    EGLint numConfigs = 0;
     if (!eglChooseConfig(m_display, attribs, &config, 1, &numConfigs) || numConfigs <= 0) {
+        SB_LOGE("EGL", "Error memilih EGL config");
         return false;
     }
 
@@ -86,16 +90,28 @@ bool GLRenderer::initEGL(ANativeWindow* window) {
     };
 
     m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, ctxAttribs);
-    if (m_context == EGL_NO_CONTEXT) return false;
+    if (m_context == EGL_NO_CONTEXT) {
+        SB_LOGE("EGL", "Error eglCreateContext (GLES 3.0)");
+        return false;
+    }
 
     m_surface = eglCreateWindowSurface(m_display, config, m_window, nullptr);
-    if (m_surface == EGL_NO_SURFACE) return false;
+    if (m_surface == EGL_NO_SURFACE) {
+        SB_LOGE("EGL", "Error eglCreateWindowSurface");
+        return false;
+    }
 
-    if (!eglMakeCurrent(m_display, m_surface, m_surface, m_context)) return false;
+    if (!eglMakeCurrent(m_display, m_surface, m_surface, m_context)) {
+        SB_LOGE("EGL", "Error eglMakeCurrent");
+        return false;
+    }
+
+    eglSwapInterval(m_display, 1);
 
     m_screenW = ANativeWindow_getWidth(m_window);
     m_screenH = ANativeWindow_getHeight(m_window);
     resize(m_screenW, m_screenH);
+    SB_LOGI("EGL", "EGL & GLES 3.0 siap: layar %dx%d (viewport %dx%d @ %d,%d)", m_screenW, m_screenH, m_vpW, m_vpH, m_vpX, m_vpY);
 
     GLuint vs = compileShader(GL_VERTEX_SHADER, VERTEX_SHADER);
     GLuint fs = compileShader(GL_FRAGMENT_SHADER, FRAGMENT_SHADER);
@@ -120,7 +136,6 @@ bool GLRenderer::initEGL(ANativeWindow* window) {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    LOGI("EGL & OpenGL ES 3.0 initialized successfully. Screen: %dx%d", m_screenW, m_screenH);
     return true;
 }
 
