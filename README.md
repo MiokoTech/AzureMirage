@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="Azure Mirage - Chord of Lyra" width="480">
 </p>
 
-# AVM2 Mini Virtual Machine (C++17)
+# AVM2 Mini Virtual Machine
 
 A lightweight and fast standalone Virtual Machine to execute pure **ActionScript 3 (AVM2 / DoABC)** bytecode in C++17. 
 
