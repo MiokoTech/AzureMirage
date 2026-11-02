@@ -2,6 +2,9 @@
   <img src="assets/logo.png" alt="Azure Mirage - Chord of Lyra" width="480">
 </p>
 
+## Cilukba
+https://count.getloli.com/@MiokoTech?theme=booru-lewd&padding=6&offset=0&align=bottom&scale=1.1&pixelated=1&darkmode=auto
+
 # AVM2 Mini Virtual Machine
 
 A lightweight and fast standalone Virtual Machine to execute pure **ActionScript 3 (AVM2 / DoABC)** bytecode in C++17. 
