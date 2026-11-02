@@ -1,11 +1,27 @@
 <p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=220&section=header&text=AVM2%20Mini%20VM&fontSize=56&fontColor=ffffff&fontAlignY=38&desc=Standalone%20ActionScript%203%20bytecode%20runtime%20for%20C%2B%2B17&descSize=18&descAlignY=60&animation=fadeIn" alt="AVM2 Mini VM">
+</p>
+
+<p align="center">
   <img src="assets/logo.png" alt="Azure Mirage - Chord of Lyra" width="480">
 </p>
 
-## Cilukba
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=18&pause=1200&color=C77DFF&center=true&vCenter=true&width=620&lines=Run+DoABC+bytecode+without+Flash+Player;50%2B+core+AVM2+opcodes;Native+C%2B%2B+host+bridge;Binary+cache+loading+in+under+1+ms" alt="Typing SVG">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/C%2B%2B-17-C77DFF?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++17">
+  <img src="https://img.shields.io/badge/CMake-supported-7AA2F7?style=for-the-badge&logo=cmake&logoColor=white" alt="CMake">
+  <img src="https://img.shields.io/badge/AVM2-DoABC-FF6FA5?style=for-the-badge&logo=adobe&logoColor=white" alt="AVM2 DoABC">
+  <img src="https://img.shields.io/badge/License-MIT-2EC4B6?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License">
+</p>
+
 <img src="https://count.getloli.com/@MiokoTech?theme=booru-lewd&padding=6&offset=0&align=bottom&scale=1.1&pixelated=1&darkmode=auto" alt="Visitor Count" />
 
-# AVM2 Mini Virtual Machine
+---
+
+## Overview
 
 A lightweight and fast standalone Virtual Machine to execute pure **ActionScript 3 (AVM2 / DoABC)** bytecode in C++17. 
 
@@ -212,3 +228,8 @@ clang++ -std=c++17 -O3 -c avm2_vm.cpp -o avm2_vm.o
 ## License
 
 This project is released under the **MIT License**. Free to use for commercial, open source, and community modding purposes.
+
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=120&section=footer" alt="">
+</p>
