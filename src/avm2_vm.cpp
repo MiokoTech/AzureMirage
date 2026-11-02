@@ -226,6 +226,67 @@ Avm2Value Avm2Object::callMethod(const std::string& name, const std::vector<Avm2
         newArr->m_arrayItems.assign(m_arrayItems.begin() + start, m_arrayItems.begin() + end);
         return Avm2Value::object(newArr);
     }
+    if (name == "splice") {
+        /* note: splice(start, deleteCount, ...items) standar AS3, ngembaliin array elemen yang dihapus */
+        int sz = static_cast<int>(m_arrayItems.size());
+        if (args.empty()) {
+            return Avm2Value::object(std::make_shared<Avm2Object>());
+        }
+        int start = args[0].toInt();
+        if (start < 0) start = std::max(0, sz + start);
+        start = std::clamp(start, 0, sz);
+
+        int delCount = (args.size() >= 2) ? args[1].toInt() : (sz - start);
+        delCount = std::clamp(delCount, 0, sz - start);
+
+        auto removedArr = std::make_shared<Avm2Object>();
+        removedArr->m_arrayItems.assign(m_arrayItems.begin() + start, m_arrayItems.begin() + start + delCount);
+
+        m_arrayItems.erase(m_arrayItems.begin() + start, m_arrayItems.begin() + start + delCount);
+
+        if (args.size() > 2) {
+            m_arrayItems.insert(m_arrayItems.begin() + start, args.begin() + 2, args.end());
+        }
+        return Avm2Value::object(removedArr);
+    }
+    if (name == "concat") {
+        auto resultArr = std::make_shared<Avm2Object>();
+        resultArr->m_arrayItems = m_arrayItems;
+        for (const auto& a : args) {
+            if (a.type == Avm2Type::Object && a.objVal && !a.objVal->m_arrayItems.empty()) {
+                resultArr->m_arrayItems.insert(resultArr->m_arrayItems.end(), a.objVal->m_arrayItems.begin(), a.objVal->m_arrayItems.end());
+            } else {
+                resultArr->m_arrayItems.push_back(a);
+            }
+        }
+        return Avm2Value::object(resultArr);
+    }
+    if (name == "join") {
+        std::string delim = args.empty() ? "," : args[0].toString();
+        std::string res;
+        for (size_t i = 0; i < m_arrayItems.size(); ++i) {
+            if (i > 0) res += delim;
+            res += m_arrayItems[i].toString();
+        }
+        return Avm2Value::string(res);
+    }
+    if (name == "reverse") {
+        std::reverse(m_arrayItems.begin(), m_arrayItems.end());
+        return Avm2Value::undefined();
+    }
+    if (name == "hasOwnProperty" && !args.empty()) {
+        std::string prop = args[0].toString();
+        if (properties.find(prop) != properties.end()) {
+            return Avm2Value::boolean(true);
+        }
+        try {
+            int idx = std::stoi(prop);
+            if (idx >= 0 && idx < static_cast<int>(m_arrayItems.size())) {
+                return Avm2Value::boolean(true);
+            }
+        } catch (...) {}
+        return Avm2Value::boolean(false);
+    }
     return Avm2Value::undefined();
 }
 
@@ -364,6 +425,35 @@ static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std
                 return Avm2Value::integer(static_cast<uint8_t>(str[idx]));
             }
             return Avm2Value::number(0.0);
+        }
+        if (name == "substring" && !args.empty()) {
+            int sz = static_cast<int>(str.size());
+            int start = std::max(0, args[0].toInt());
+            int end = (args.size() >= 2) ? std::max(0, args[1].toInt()) : sz;
+            start = std::clamp(start, 0, sz);
+            end = std::clamp(end, 0, sz);
+            if (start > end) std::swap(start, end);
+            return Avm2Value::string(str.substr(start, end - start));
+        }
+        if (name == "split") {
+            auto arr = std::make_shared<Avm2Object>();
+            if (args.empty() || args[0].isNullOrUndefined()) {
+                arr->pushElement(Avm2Value::string(str));
+                return Avm2Value::object(arr);
+            }
+            std::string delim = args[0].toString();
+            if (delim.empty()) {
+                for (char c : str) arr->pushElement(Avm2Value::string(std::string(1, c)));
+            } else {
+                size_t start = 0;
+                size_t pos = 0;
+                while ((pos = str.find(delim, start)) != std::string::npos) {
+                    arr->pushElement(Avm2Value::string(str.substr(start, pos - start)));
+                    start = pos + delim.size();
+                }
+                arr->pushElement(Avm2Value::string(str.substr(start)));
+            }
+            return Avm2Value::object(arr);
         }
     }
 
