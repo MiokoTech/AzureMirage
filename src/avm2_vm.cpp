@@ -277,6 +277,33 @@ public:
         if (name == "atan2" && args.size() >= 2) {
             return Avm2Value::number(std::atan2(args[0].toDouble(), args[1].toDouble()));
         }
+        if (name == "sin") {
+            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::sin(args[0].toDouble()));
+        }
+        if (name == "cos") {
+            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::cos(args[0].toDouble()));
+        }
+        if (name == "tan") {
+            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::tan(args[0].toDouble()));
+        }
+        if (name == "asin") {
+            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::asin(args[0].toDouble()));
+        }
+        if (name == "acos") {
+            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::acos(args[0].toDouble()));
+        }
+        if (name == "atan") {
+            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::atan(args[0].toDouble()));
+        }
+        if (name == "pow" && args.size() >= 2) {
+            return Avm2Value::number(std::pow(args[0].toDouble(), args[1].toDouble()));
+        }
+        if (name == "log") {
+            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::log(args[0].toDouble()));
+        }
+        if (name == "exp") {
+            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::exp(args[0].toDouble()));
+        }
         return Avm2Object::callMethod(name, args, hostContext);
     }
 };
@@ -286,6 +313,9 @@ static std::shared_ptr<MathMockObject> s_mathMock = std::make_shared<MathMockObj
 /* Helper cari properti di target object atau cari ke this */
 static Avm2Value resolveProperty(const Avm2Value& obj, const std::string& name, std::shared_ptr<Avm2Object> thisObj) {
     if (name == "Math") return Avm2Value::object(s_mathMock);
+    if (obj.type == Avm2Type::String && name == "length") {
+        return Avm2Value::integer(static_cast<int32_t>(obj.sVal.size()));
+    }
     if (obj.type == Avm2Type::Object && obj.objVal) {
         return obj.objVal->getProperty(name);
     }
@@ -306,6 +336,59 @@ static void assignProperty(Avm2Value& obj, const std::string& name, const Avm2Va
 }
 
 static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std::vector<Avm2Value>& args, std::shared_ptr<Avm2Object> thisObj, void* hostContext) {
+    /* String prototype methods */
+    if (obj.type == Avm2Type::String) {
+        const std::string& str = obj.sVal;
+        if (name == "indexOf" && !args.empty()) {
+            std::string sub = args[0].toString();
+            size_t pos = str.find(sub);
+            return Avm2Value::integer((pos != std::string::npos) ? static_cast<int32_t>(pos) : -1);
+        }
+        if (name == "substr" && !args.empty()) {
+            int start = args[0].toInt();
+            int len = (args.size() >= 2) ? args[1].toInt() : static_cast<int>(str.size());
+            if (start < 0) start = std::max(0, static_cast<int>(str.size()) + start);
+            if (start >= static_cast<int>(str.size()) || len <= 0) return Avm2Value::string("");
+            return Avm2Value::string(str.substr(start, len));
+        }
+        if (name == "charAt" && !args.empty()) {
+            int idx = args[0].toInt();
+            if (idx >= 0 && idx < static_cast<int>(str.size())) {
+                return Avm2Value::string(std::string(1, str[idx]));
+            }
+            return Avm2Value::string("");
+        }
+        if (name == "charCodeAt" && !args.empty()) {
+            int idx = args[0].toInt();
+            if (idx >= 0 && idx < static_cast<int>(str.size())) {
+                return Avm2Value::integer(static_cast<uint8_t>(str[idx]));
+            }
+            return Avm2Value::number(0.0);
+        }
+    }
+
+    /* Global helper functions */
+    if (name == "isNaN" && !args.empty()) {
+        return Avm2Value::boolean(std::isnan(args[0].toDouble()));
+    }
+    if (name == "isFinite" && !args.empty()) {
+        return Avm2Value::boolean(std::isfinite(args[0].toDouble()));
+    }
+    if (name == "parseInt" && !args.empty()) {
+        try {
+            return Avm2Value::integer(std::stoi(args[0].toString()));
+        } catch (...) {
+            return Avm2Value::integer(0);
+        }
+    }
+    if (name == "parseFloat" && !args.empty()) {
+        try {
+            return Avm2Value::number(std::stod(args[0].toString()));
+        } catch (...) {
+            return Avm2Value::number(0.0);
+        }
+    }
+
     if (obj.type == Avm2Type::Object && obj.objVal) {
         return obj.objVal->callMethod(name, args, hostContext);
     }
