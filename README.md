@@ -3,18 +3,18 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/C%2B%2B-17-C77DFF?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++17">
+  <img src="https://img.shields.io/badge/CMake-supported-7AA2F7?style=for-the-badge&logo=cmake&logoColor=white" alt="CMake">
+  <img src="https://img.shields.io/badge/AVM2-DoABC-FF6FA5?style=for-the-badge&logo=adobe&logoColor=white" alt="AVM2 DoABC">
+  <img src="https://img.shields.io/badge/License-MIT-2EC4B6?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License">
+</p>
+
+<p align="center">
   <img src="assets/logo.svg" alt="Azure Mirage - Chord of Lyra" width="480">
 </p>
 
 <p align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=18&pause=1200&color=C77DFF&center=true&vCenter=true&width=620&lines=Run+DoABC+bytecode+without+Flash+Player;50%2B+core+AVM2+opcodes;Native+C%2B%2B+host+bridge;Binary+cache+loading+in+under+1+ms" alt="Typing SVG">
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/C%2B%2B-17-C77DFF?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++17">
-  <img src="https://img.shields.io/badge/CMake-supported-7AA2F7?style=for-the-badge&logo=cmake&logoColor=white" alt="CMake">
-  <img src="https://img.shields.io/badge/AVM2-DoABC-FF6FA5?style=for-the-badge&logo=adobe&logoColor=white" alt="AVM2 DoABC">
-  <img src="https://img.shields.io/badge/License-MIT-2EC4B6?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License">
 </p>
 
 <p align="center">
