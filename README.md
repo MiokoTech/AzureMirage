@@ -52,7 +52,9 @@ Directly executes the original DoABC instruction bytecode via an efficient C++ s
   - Dynamic Indexing: Supports `<MultinameL>` and `<RTQNameL>` for runtime-based array and dictionary access (`obj[key]`).
   - Coercion & Casting: `convert_s`, `convert_i`, `convert_u`, `convert_d`, `convert_b`, `coerce`, `coerce_a`, `coerce_s`.
 - **C++ Host Interop / Bridge**: Through the virtual base class `Avm2Object`, C++ hosts can expose variables, coordinates, game methods, and callbacks to the AS3 script environment with native performance.
-- **Built-in Simulation**: Default mock math objects (`Math.min`, `Math.max`, `Math.abs`, `Math.floor`, `Math.ceil`, `Math.random`) and `Dictionary` handling.
+- **Built-in Simulation & Standard Library**:
+  - Native `Array` prototype methods (`indexOf`, `push`, `pop`, `length`) for dynamic array operations.
+  - Default `Math` mock objects (`Math.min`, `Math.max`, `Math.abs`, `Math.floor`, `Math.ceil`, `Math.random`, `Math.sqrt`, `Math.atan2`) and `Dictionary` handling.
 
 ---
 

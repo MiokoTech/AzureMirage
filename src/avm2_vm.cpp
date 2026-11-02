@@ -165,6 +165,12 @@ Avm2Value Avm2Value::modulo(const Avm2Value& a, const Avm2Value& b) {
 
 /* Default dynamic object get/set */
 Avm2Value Avm2Object::getProperty(const std::string& name) {
+    if (name == "length") {
+        /* note: array length di AS3 ngembaliin ukuran m_arrayItems kalau objeknya array */
+        if (!m_arrayItems.empty() || properties.find("length") == properties.end()) {
+            return Avm2Value::integer(static_cast<int32_t>(m_arrayItems.size()));
+        }
+    }
     auto it = properties.find(name);
     return (it != properties.end()) ? it->second : Avm2Value::undefined();
 }
@@ -173,7 +179,29 @@ void Avm2Object::setProperty(const std::string& name, const Avm2Value& val) {
     properties[name] = val;
 }
 
-Avm2Value Avm2Object::callMethod(const std::string& /*name*/, const std::vector<Avm2Value>& /*args*/, void* /*hostContext*/) {
+Avm2Value Avm2Object::callMethod(const std::string& name, const std::vector<Avm2Value>& args, void* /*hostContext*/) {
+    /* note: method Array native AS3 (indexOf, push, pop) wajib ada di Avm2Object biar logika suMoveTarget ama hitsDamage jalan */
+    if (name == "indexOf" && !args.empty()) {
+        const auto& target = args[0];
+        for (size_t i = 0; i < m_arrayItems.size(); ++i) {
+            if (m_arrayItems[i].equals(target)) {
+                return Avm2Value::integer(static_cast<int32_t>(i));
+            }
+        }
+        return Avm2Value::integer(-1);
+    }
+    if (name == "push") {
+        for (const auto& a : args) {
+            m_arrayItems.push_back(a);
+        }
+        return Avm2Value::integer(static_cast<int32_t>(m_arrayItems.size()));
+    }
+    if (name == "pop") {
+        if (m_arrayItems.empty()) return Avm2Value::undefined();
+        auto val = m_arrayItems.back();
+        m_arrayItems.pop_back();
+        return val;
+    }
     return Avm2Value::undefined();
 }
 
