@@ -38,12 +38,6 @@ Directly executes the original DoABC instruction bytecode via an efficient C++ s
 
 ---
 
-<p align="center">
-  <img src="assets/logo.svg" alt="Azure Mirage - Chord of Lyra" width="480">
-</p>
-
----
-
 ## Key Features
 
 - **Standalone & Embeddable**: Simply include the `avm2_vm.h` header and `avm2_vm.cpp` into your C++ project.
@@ -230,6 +224,10 @@ clang++ -std=c++17 -O3 -c avm2_vm.cpp -o avm2_vm.o
 ```
 
 ---
+
+<p align="center">
+  <img src="assets/logo.svg" alt="Azure Mirage - Chord of Lyra" width="480">
+</p>
 
 ## License
 
