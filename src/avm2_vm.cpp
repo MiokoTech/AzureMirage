@@ -202,6 +202,30 @@ Avm2Value Avm2Object::callMethod(const std::string& name, const std::vector<Avm2
         m_arrayItems.pop_back();
         return val;
     }
+    if (name == "shift") {
+        if (m_arrayItems.empty()) return Avm2Value::undefined();
+        auto val = m_arrayItems.front();
+        m_arrayItems.erase(m_arrayItems.begin());
+        return val;
+    }
+    if (name == "unshift") {
+        for (auto it = args.rbegin(); it != args.rend(); ++it) {
+            m_arrayItems.insert(m_arrayItems.begin(), *it);
+        }
+        return Avm2Value::integer(static_cast<int32_t>(m_arrayItems.size()));
+    }
+    if (name == "slice") {
+        int sz = static_cast<int>(m_arrayItems.size());
+        int start = args.empty() ? 0 : args[0].toInt();
+        int end = (args.size() >= 2) ? args[1].toInt() : sz;
+        if (start < 0) start = std::max(0, sz + start);
+        if (end < 0) end = std::max(0, sz + end);
+        start = std::clamp(start, 0, sz);
+        end = std::clamp(end, start, sz);
+        auto newArr = std::make_shared<Avm2Object>();
+        newArr->m_arrayItems.assign(m_arrayItems.begin() + start, m_arrayItems.begin() + end);
+        return Avm2Value::object(newArr);
+    }
     return Avm2Value::undefined();
 }
 
@@ -467,6 +491,45 @@ Avm2Value Avm2Interpreter::execute(
                 break;
             }
             case 0x1D: break; /* popscope */
+            case 0x1E: { /* nextname */
+                Avm2Value idxVal = pop();
+                Avm2Value objVal = pop();
+                int32_t idx = idxVal.toInt() - 1;
+                if (objVal.type == Avm2Type::Object && objVal.objVal) {
+                    if (!objVal.objVal->m_arrayItems.empty()) {
+                        push(Avm2Value::integer(idx));
+                    } else if (idx >= 0 && static_cast<size_t>(idx) < objVal.objVal->properties.size()) {
+                        auto it = objVal.objVal->properties.begin();
+                        std::advance(it, idx);
+                        push(Avm2Value::string(it->first));
+                    } else {
+                        push(Avm2Value::undefined());
+                    }
+                } else {
+                    push(Avm2Value::undefined());
+                }
+                break;
+            }
+            case 0x23: { /* nextvalue */
+                /* AVM2 nextvalue buat loop `for each (var x in list)` */
+                Avm2Value idxVal = pop();
+                Avm2Value objVal = pop();
+                int32_t idx = idxVal.toInt() - 1;
+                if (objVal.type == Avm2Type::Object && objVal.objVal) {
+                    if (idx >= 0 && static_cast<size_t>(idx) < objVal.objVal->m_arrayItems.size()) {
+                        push(objVal.objVal->m_arrayItems[idx]);
+                    } else if (idx >= 0 && static_cast<size_t>(idx) < objVal.objVal->properties.size()) {
+                        auto it = objVal.objVal->properties.begin();
+                        std::advance(it, idx);
+                        push(it->second);
+                    } else {
+                        push(Avm2Value::undefined());
+                    }
+                } else {
+                    push(Avm2Value::undefined());
+                }
+                break;
+            }
 
             /* Push constants */
             case 0x20: push(Avm2Value::null()); break;
@@ -519,7 +582,30 @@ Avm2Value Avm2Interpreter::execute(
                 pop();
                 break;
             }
-
+            case 0x32: { /* hasnext2 object_reg, index_reg */
+                /*
+                 * hasnext2 itu opcode sakti di AS3 buat iterator loop.  
+                 * Operasinya langsung ngutak-atik locals[index_reg] dan push boolean ke stack.
+                 */
+                uint32_t objReg = readU30();
+                uint32_t idxReg = readU30();
+                int32_t curIdx = (idxReg < locals.size()) ? locals[idxReg].toInt() : 0;
+                bool hasMore = false;
+                if (objReg < locals.size() && locals[objReg].type == Avm2Type::Object && locals[objReg].objVal) {
+                    auto o = locals[objReg].objVal;
+                    size_t count = !o->m_arrayItems.empty() ? o->m_arrayItems.size() : o->properties.size();
+                    if (static_cast<size_t>(curIdx) < count) {
+                        hasMore = true;
+                        if (idxReg < locals.size()) locals[idxReg] = Avm2Value::integer(curIdx + 1);
+                    } else {
+                        if (idxReg < locals.size()) locals[idxReg] = Avm2Value::integer(0);
+                    }
+                } else {
+                    if (idxReg < locals.size()) locals[idxReg] = Avm2Value::integer(0);
+                }
+                push(Avm2Value::boolean(hasMore));
+                break;
+            }
             /* Object & function instantiation */
             case 0x40: { /* newfunction method_id */
                 /* note: closure sementara dipass string id buat delayCall / event handler */
@@ -778,6 +864,16 @@ Avm2Value Avm2Interpreter::execute(
             case 0xA3: { Avm2Value b = pop(), a = pop(); push(Avm2Value::divide(a, b)); break; }
             case 0xA4: { Avm2Value b = pop(), a = pop(); push(Avm2Value::modulo(a, b)); break; }
 
+            /* Bitwise shifts */
+            case 0xA5: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a << (b & 0x1F))); break; } /* lshift */
+            case 0xA6: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a >> (b & 0x1F))); break; } /* rshift */
+            case 0xA7: { /* urshift */
+                uint32_t b = static_cast<uint32_t>(pop().toInt());
+                uint32_t a = static_cast<uint32_t>(pop().toInt());
+                push(Avm2Value::integer(static_cast<int32_t>(a >> (b & 0x1F))));
+                break;
+            }
+
             /* Bitwise ops */
             case 0xA8: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a & b)); break; }
             case 0xA9: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a | b)); break; }
@@ -821,6 +917,13 @@ Avm2Value Avm2Interpreter::execute(
                 if (r < locals.size()) locals[r] = Avm2Value::integer(locals[r].toInt() - 1);
                 break;
             }
+            case 0xC4: { /* negate_i */
+                if (!stack.empty()) stack.back() = Avm2Value::integer(-stack.back().toInt());
+                break;
+            }
+            case 0xC5: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a + b)); break; } /* add_i */
+            case 0xC6: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a - b)); break; } /* subtract_i */
+            case 0xC7: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a * b)); break; } /* multiply_i */
 
             default:
                 /* abaikan opcode debug/unsupported */
