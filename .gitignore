@@ -1,0 +1,8 @@
+# Build artifacts
+build/
+bin/
+*.o
+*.obj
+*.a
+*.so
+avm2_demo
