@@ -25,6 +25,7 @@
 #include "avm2_vm.h"
 #include <cmath>
 #include <cstdlib>
+#include <cctype>
 #include <algorithm>
 
 namespace avm2 {
@@ -455,6 +456,27 @@ static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std
             }
             return Avm2Value::object(arr);
         }
+        if (name == "toLowerCase") {
+            std::string res = str;
+            for (char& c : res) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            return Avm2Value::string(res);
+        }
+        if (name == "toUpperCase") {
+            std::string res = str;
+            for (char& c : res) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+            return Avm2Value::string(res);
+        }
+        if (name == "replace" && args.size() >= 2) {
+            std::string from = args[0].toString();
+            std::string to = args[1].toString();
+            size_t pos = str.find(from);
+            if (pos != std::string::npos) {
+                std::string res = str;
+                res.replace(pos, from.length(), to);
+                return Avm2Value::string(res);
+            }
+            return Avm2Value::string(str);
+        }
     }
 
     /* Global helper functions */
@@ -793,6 +815,14 @@ Avm2Value Avm2Interpreter::execute(
                 push(Avm2Value::object(std::make_shared<Avm2Object>()));
                 break;
             }
+            case 0x44: { /* callstatic method_id, arg_count */
+                readU30();
+                uint32_t argCount = readU30();
+                for (uint32_t i = 0; i < argCount; ++i) pop();
+                pop();
+                push(Avm2Value::undefined());
+                break;
+            }
             case 0x4a: { /* constructprop mn_idx, arg_count */
                 readU30();
                 uint32_t argCount = readU30();
@@ -817,6 +847,13 @@ Avm2Value Avm2Interpreter::execute(
                 for (int i = static_cast<int>(argCount) - 1; i >= 0; --i) margs[i] = pop();
                 Avm2Value obj = pop();
                 push(invokeMethod(obj, methName, margs, thisObject, hostContext));
+                break;
+            }
+            case 0x4E: { /* callsupervoid mn_idx, arg_count */
+                readU30();
+                uint32_t argCount = readU30();
+                for (uint32_t i = 0; i < argCount; ++i) pop();
+                pop(); /* pop receiver */
                 break;
             }
 
@@ -851,6 +888,17 @@ Avm2Value Avm2Interpreter::execute(
                 push(Avm2Value::object(std::make_shared<Avm2Object>()));
                 break;
             }
+            case 0x59: { /* getdescendants mn_idx */
+                readU30();
+                pop();
+                push(Avm2Value::undefined());
+                break;
+            }
+            case 0x5A: { /* newcatch index */
+                readU30();
+                push(Avm2Value::object(std::make_shared<Avm2Object>()));
+                break;
+            }
             case 0x5D: { /* findpropstrict mn_idx */
                 readU30();
                 push(locals[0]); /* fallback ke this */
@@ -870,6 +918,11 @@ Avm2Value Avm2Interpreter::execute(
                 uint32_t mnIdx = readU30();
                 const std::string& propName = pool.getMultiname(mnIdx);
                 push(resolveProperty(Avm2Value::undefined(), propName, thisObject));
+                break;
+            }
+            case 0x64: { /* getglobalslot slot_idx */
+                readU30();
+                push(Avm2Value::undefined());
                 break;
             }
             case 0x65: { /* getscopeobject scope_idx */
@@ -922,6 +975,16 @@ Avm2Value Avm2Interpreter::execute(
                     Avm2Value obj = pop();
                     assignProperty(obj, propName, val, thisObject);
                 }
+                break;
+            }
+            case 0x6A: { /* deleteproperty mn_idx */
+                uint32_t mnIdx = readU30();
+                const std::string& propName = pool.getMultiname(mnIdx);
+                Avm2Value obj = pop();
+                if (obj.type == Avm2Type::Object && obj.objVal) {
+                    obj.objVal->properties.erase(propName);
+                }
+                push(Avm2Value::boolean(true));
                 break;
             }
             case 0x6c: { /* getslot slot_idx */
@@ -1010,6 +1073,10 @@ Avm2Value Avm2Interpreter::execute(
                 }
                 break;
             }
+            case 0x86: { /* astype type_idx */
+                readU30();
+                break;
+            }
             case 0x87: { /* astypelate (val as Class) */
                 pop(); /* pop class object */
                 break;
@@ -1025,6 +1092,16 @@ Avm2Value Avm2Interpreter::execute(
             case 0x92: { /* decrement */
                 Avm2Value v = pop();
                 push(Avm2Value::number(v.toDouble() - 1.0));
+                break;
+            }
+            case 0x93: { /* inclocal r */
+                uint32_t r = readU30();
+                if (r < locals.size()) locals[r] = Avm2Value::number(locals[r].toDouble() + 1.0);
+                break;
+            }
+            case 0x94: { /* declocal r */
+                uint32_t r = readU30();
+                if (r < locals.size()) locals[r] = Avm2Value::number(locals[r].toDouble() - 1.0);
                 break;
             }
             case 0x95:
@@ -1059,6 +1136,18 @@ Avm2Value Avm2Interpreter::execute(
             case 0xAE: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.lessEquals(b))); break; }
             case 0xAF: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.greaterThan(b))); break; }
             case 0xB0: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.greaterEquals(b))); break; }
+            case 0xB1: { /* instanceof */
+                pop(); /* pop class object */
+                Avm2Value val = pop();
+                push(Avm2Value::boolean(!val.isNullOrUndefined()));
+                break;
+            }
+            case 0xB2: { /* istype type_idx */
+                readU30();
+                Avm2Value val = pop();
+                push(Avm2Value::boolean(!val.isNullOrUndefined()));
+                break;
+            }
             case 0xB3: { /* istypelate (val is Class) */
                 pop(); /* pop class object */
                 Avm2Value val = pop();
@@ -1097,6 +1186,23 @@ Avm2Value Avm2Interpreter::execute(
             case 0xC5: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a + b)); break; } /* add_i */
             case 0xC6: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a - b)); break; } /* subtract_i */
             case 0xC7: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a * b)); break; } /* multiply_i */
+
+            /* Debug info opcodes (wajib konsumsi operand DoABC biar PC ga slip) */
+            case 0xEF: { /* debug type, name_idx, reg, extra */
+                if (pc < codeLen) ++pc;
+                readU30();
+                if (pc < codeLen) ++pc;
+                readU30();
+                break;
+            }
+            case 0xF0: { /* debugline line_num */
+                readU30();
+                break;
+            }
+            case 0xF1: { /* debugfile file_idx */
+                readU30();
+                break;
+            }
 
             default:
                 /* abaikan opcode debug/unsupported */
