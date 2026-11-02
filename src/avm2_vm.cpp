@@ -26,6 +26,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <cctype>
+#include <limits>
+#include <chrono>
 #include <algorithm>
 
 namespace avm2 {
@@ -288,6 +290,29 @@ Avm2Value Avm2Object::callMethod(const std::string& name, const std::vector<Avm2
         } catch (...) {}
         return Avm2Value::boolean(false);
     }
+    if (name == "sort") {
+        std::sort(m_arrayItems.begin(), m_arrayItems.end(), [](const Avm2Value& a, const Avm2Value& b) {
+            if (a.isNumber() && b.isNumber()) {
+                return a.toDouble() < b.toDouble();
+            }
+            return a.toString() < b.toString();
+        });
+        return Avm2Value::undefined();
+    }
+    if (name == "toString") {
+        if (!m_arrayItems.empty()) {
+            std::string res;
+            for (size_t i = 0; i < m_arrayItems.size(); ++i) {
+                if (i > 0) res += ",";
+                res += m_arrayItems[i].toString();
+            }
+            return Avm2Value::string(res);
+        }
+        return Avm2Value::string("[object Object]");
+    }
+    if (name == "valueOf") {
+        return Avm2Value::undefined();
+    }
     return Avm2Value::undefined();
 }
 
@@ -302,6 +327,12 @@ public:
     Avm2Value getProperty(const std::string& name) override {
         if (name == "PI") return Avm2Value::number(3.141592653589793);
         if (name == "E") return Avm2Value::number(2.718281828459045);
+        if (name == "LN10") return Avm2Value::number(2.302585092994046);
+        if (name == "LN2") return Avm2Value::number(0.6931471805599453);
+        if (name == "LOG10E") return Avm2Value::number(0.4342944819032518);
+        if (name == "LOG2E") return Avm2Value::number(1.4426950408889634);
+        if (name == "SQRT1_2") return Avm2Value::number(0.7071067811865476);
+        if (name == "SQRT2") return Avm2Value::number(1.4142135623730951);
         return Avm2Object::getProperty(name);
     }
 
@@ -500,6 +531,40 @@ static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std
             return Avm2Value::number(0.0);
         }
     }
+    if (name == "getTimer") {
+        static auto s_appStartTime = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        int32_t ms = static_cast<int32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now - s_appStartTime).count());
+        return Avm2Value::integer(ms);
+    }
+    if (name == "escape" && !args.empty()) {
+        const std::string& input = args[0].toString();
+        std::string res;
+        for (unsigned char c : input) {
+            if (std::isalnum(c) || c == '@' || c == '*' || c == '_' || c == '+' || c == '-' || c == '.' || c == '/') {
+                res += static_cast<char>(c);
+            } else {
+                char buf[4];
+                snprintf(buf, sizeof(buf), "%%%02X", c);
+                res += buf;
+            }
+        }
+        return Avm2Value::string(res);
+    }
+    if (name == "unescape" && !args.empty()) {
+        const std::string& input = args[0].toString();
+        std::string res;
+        for (size_t i = 0; i < input.size(); ++i) {
+            if (input[i] == '%' && i + 2 < input.size() && std::isxdigit(input[i + 1]) && std::isxdigit(input[i + 2])) {
+                int hexVal = std::stoi(input.substr(i + 1, 2), nullptr, 16);
+                res += static_cast<char>(hexVal);
+                i += 2;
+            } else {
+                res += input[i];
+            }
+        }
+        return Avm2Value::string(res);
+    }
 
     if (obj.type == Avm2Type::Object && obj.objVal) {
         return obj.objVal->callMethod(name, args, hostContext);
@@ -685,6 +750,22 @@ Avm2Value Avm2Interpreter::execute(
                 if (!a.strictEquals(b)) pc += offset;
                 break;
             }
+            case 0x1B: { /* lookupswitch default_offset, case_count, case_offsets... */
+                size_t basePc = pc - 1; // target offset dihitung relatif dari posisi opcode 0x1B
+                int32_t defaultOffset = readS24();
+                uint32_t maxIndex = readU30();
+                std::vector<int32_t> caseOffsets(maxIndex + 1);
+                for (uint32_t i = 0; i <= maxIndex; ++i) {
+                    caseOffsets[i] = readS24();
+                }
+                int32_t index = pop().toInt();
+                if (index >= 0 && static_cast<uint32_t>(index) <= maxIndex) {
+                    pc = basePc + caseOffsets[index];
+                } else {
+                    pc = basePc + defaultOffset;
+                }
+                break;
+            }
             case 0x1D: break; /* popscope */
             case 0x1E: { /* nextname */
                 Avm2Value idxVal = pop();
@@ -741,7 +822,7 @@ Avm2Value Avm2Interpreter::execute(
             }
             case 0x26: push(Avm2Value::boolean(true)); break;
             case 0x27: push(Avm2Value::boolean(false)); break;
-            case 0x28: push(Avm2Value::number(0.0)); break; /* pushnan */
+            case 0x28: push(Avm2Value::number(std::numeric_limits<double>::quiet_NaN())); break; /* pushnan */
             case 0x29: pop(); break; /* pop stack */
             case 0x2A: { /* dup */
                 if (!stack.empty()) push(stack.back());
