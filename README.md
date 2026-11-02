@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/logo.png" alt="Azure Mirage - Chord of Lyra" width="480">
+  <img src="assets/logo.svg" alt="Azure Mirage - Chord of Lyra" width="480">
 </p>
 
 <p align="center">
@@ -17,8 +17,9 @@
   <img src="https://img.shields.io/badge/License-MIT-2EC4B6?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License">
 </p>
 
-<img src="https://count.getloli.com/@MiokoTech?theme=booru-lewd&padding=6&offset=0&align=bottom&scale=1.1&pixelated=1&darkmode=auto" alt="Visitor Count" />
-
+<p align="center">
+  <img src="https://count.getloli.com/@MiokoTech?theme=booru-lewd&padding=6&offset=0&align=bottom&scale=1.1&pixelated=1&darkmode=auto" alt="Visitor Count" />
+</p>
 ---
 
 ## Overview
