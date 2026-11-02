@@ -10,10 +10,6 @@
 </p>
 
 <p align="center">
-  <img src="assets/logo.svg" alt="Azure Mirage - Chord of Lyra" width="480">
-</p>
-
-<p align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=18&pause=1200&color=C77DFF&center=true&vCenter=true&width=620&lines=Run+DoABC+bytecode+without+Flash+Player;50%2B+core+AVM2+opcodes;Native+C%2B%2B+host+bridge;Binary+cache+loading+in+under+1+ms" alt="Typing SVG">
 </p>
 
@@ -39,6 +35,12 @@ In the game Bleach vs Naruto / BVN, modders often create unique attack logic, gr
 
 **AVM2 Mini VM** solves this problem!
 Directly executes the original DoABC instruction bytecode via an efficient C++ stack machine. No syntactic assumptions or transpilation bugs.
+
+---
+
+<p align="center">
+  <img src="assets/logo.svg" alt="Azure Mirage - Chord of Lyra" width="480">
+</p>
 
 ---
 
