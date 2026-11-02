@@ -669,6 +669,7 @@ Avm2Value Avm2Interpreter::execute(
             }
             case 0x95:
             case 0x96: push(Avm2Value::boolean(!pop().toBool())); break; /* not */
+            case 0x97: push(Avm2Value::integer(~pop().toInt())); break; /* bitnot */
 
             case 0xA0: { Avm2Value b = pop(), a = pop(); push(Avm2Value::add(a, b)); break; }
             case 0xA1: { Avm2Value b = pop(), a = pop(); push(Avm2Value::subtract(a, b)); break; }
@@ -680,20 +681,14 @@ Avm2Value Avm2Interpreter::execute(
             case 0xA8: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a & b)); break; }
             case 0xA9: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a | b)); break; }
             case 0xAA: { int32_t b = pop().toInt(), a = pop().toInt(); push(Avm2Value::integer(a ^ b)); break; }
-            case 0xAB: push(Avm2Value::integer(~pop().toInt())); break; /* bitnot */
 
             /* Comparison ops */
-            case 0xAC: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.equals(b))); break; }
-            case 0xAD: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.strictEquals(b))); break; }
-            case 0xAE: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.lessThan(b))); break; }
-            case 0xAF: { /* ifnle / lessequals */
-                int32_t offset = readS24();
-                Avm2Value b = pop(), a = pop();
-                if (a.toDouble() > b.toDouble() || std::isnan(a.toDouble()) || std::isnan(b.toDouble())) pc += offset;
-                break;
-            }
-            case 0xB0: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.greaterThan(b))); break; }
-            case 0xB1: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.greaterEquals(b))); break; }
+            case 0xAB: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.equals(b))); break; }
+            case 0xAC: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.strictEquals(b))); break; }
+            case 0xAD: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.lessThan(b))); break; }
+            case 0xAE: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.lessEquals(b))); break; }
+            case 0xAF: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.greaterThan(b))); break; }
+            case 0xB0: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.greaterEquals(b))); break; }
             case 0xB4: { /* in (prop in obj) */
                 Avm2Value obj = pop(), key = pop();
                 bool has = (obj.type == Avm2Type::Object && obj.objVal && obj.objVal->properties.count(key.toString()) > 0);
