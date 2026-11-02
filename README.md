@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=18&pause=1200&color=C77DFF&center=true&vCenter=true&width=620&lines=Run+DoABC+bytecode+without+Flash+Player;50%2B+core+AVM2+opcodes;Native+C%2B%2B+host+bridge;Binary+cache+loading+in+under+1+ms" alt="Typing SVG">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=18&pause=1200&color=C77DFF&center=true&vCenter=true&width=620&lines=Run+DoABC+bytecode+without+Flash+Player;125%2B+core+AVM2+opcodes;Native+C%2B%2B+host+bridge;Binary+cache+loading+in+under+1+ms" alt="Typing SVG">
 </p>
 
 ---
@@ -41,20 +41,26 @@ Directly executes the original DoABC instruction bytecode via an efficient C++ s
 ## Key Features
 
 - **Standalone & Embeddable**: Simply include the `avm2_vm.h` header and `avm2_vm.cpp` into your C++ project.
-- **Support for 50+ Core AVM2 Opcodes**:
+- **Support for 125+ Core AVM2 Opcodes**:
   - Stack Manipulation: `dup`, `swap`, `pop`, `kill`.
-  - Constant Loading: `pushbyte`, `pushshort`, `pushint`, `pushuint`, `pushdouble`, `pushstring`, `pushtrue`, `pushfalse`, `pushnull`, `pushundefined`.
-  - Local Registers: `getlocal_0` to `getlocal_3`, `setlocal_0` to `setlocal_3`, `getlocal n`, `setlocal n`.
-  - Branching & Control Flow: `jump`, `iftrue`, `iffalse`, `ifeq`, `ifne`, `iflt`, `ifle`, `ifgt`, `ifge`, `ifnle`.
-  - Arithmetic & Bitwise: `add`, `subtract`, `multiply`, `divide`, `modulo`, `negate`, `increment`, `decrement`, `bitand`, `bitor`, `bitxor`, `bitnot`.
-  - Objects & Dynamic Properties: `getproperty`, `setproperty`, `initproperty`, `getlex`, `findpropstrict`, `newobject`, `newarray`, `newactivation`, `getslot`, `setslot`, `in`, `construct`, `constructprop`.
-  - Function & Method Calls: `callproperty`, `callpropvoid`, `returnvoid`, `returnvalue`, `newfunction` (closure).
+  - Constant Loading: `pushbyte`, `pushshort`, `pushint`, `pushuint`, `pushdouble`, `pushstring`, `pushtrue`, `pushfalse`, `pushnull`, `pushundefined`, `pushnan`.
+  - Local Registers: `getlocal_0` to `getlocal_3`, `setlocal_0` to `setlocal_3`, `getlocal n`, `setlocal n`, `inclocal`, `declocal`.
+  - Branching & Control Flow: `jump`, `iftrue`, `iffalse`, `ifeq`, `ifne`, `iflt`, `ifle`, `ifgt`, `ifge`, `ifnlt`, `ifnle`, `ifngt`, `ifnge`, `ifstricteq`, `ifstrictne`, `lookupswitch`.
+  - Scope Stack & Constructors: `pushscope`, `popscope`, `constructsuper`, `callproplex`, `newclass`, `findproperty`, `findpropstrict`.
+  - Iteration & Dynamic Typing: `hasnext2`, `nextvalue`, `nextname`, `astype`, `istype`, `instanceof`, `astypelate`, `istypelate`.
+  - Arithmetic & Bitwise: `add`, `subtract`, `multiply`, `divide`, `modulo`, `negate`, `increment`, `decrement`, `bitand`, `bitor`, `bitxor`, `bitnot`, `lshift`, `rshift`, `urshift`, `negate_i`, `add_i`, `subtract_i`, `multiply_i`.
+  - Objects & Dynamic Properties: `getproperty`, `setproperty`, `initproperty`, `deleteproperty`, `getglobalslot`, `getdescendants`, `newcatch`, `getlex`, `newobject`, `newarray`, `newactivation`, `getslot`, `setslot`, `in`, `construct`, `constructprop`.
+  - Function & Method Calls: `callproperty`, `callpropvoid`, `callstatic`, `callsupervoid`, `returnvoid`, `returnvalue`, `newfunction` (closure).
   - Dynamic Indexing: Supports `<MultinameL>` and `<RTQNameL>` for runtime-based array and dictionary access (`obj[key]`).
   - Coercion & Casting: `convert_s`, `convert_i`, `convert_u`, `convert_d`, `convert_b`, `coerce`, `coerce_a`, `coerce_s`.
+  - Debug & PC Safety: `debug`, `debugline`, `debugfile` (operand consumers ensuring zero PC drift on debug DoABC builds).
 - **C++ Host Interop / Bridge**: Through the virtual base class `Avm2Object`, C++ hosts can expose variables, coordinates, game methods, and callbacks to the AS3 script environment with native performance.
 - **Built-in Simulation & Standard Library**:
-  - Native `Array` prototype methods (`indexOf`, `push`, `pop`, `length`) for dynamic array operations.
-  - Default `Math` mock objects (`Math.min`, `Math.max`, `Math.abs`, `Math.floor`, `Math.ceil`, `Math.random`, `Math.sqrt`, `Math.atan2`) and `Dictionary` handling.
+  - Native `Array` prototype methods (`indexOf`, `push`, `pop`, `shift`, `unshift`, `slice`, `splice`, `concat`, `join`, `reverse`, `sort`, `length`).
+  - Native `Object` prototype methods (`hasOwnProperty`, `toString`, `valueOf`).
+  - Native `String` prototype methods (`indexOf`, `substr`, `substring`, `charAt`, `charCodeAt`, `split`, `toLowerCase`, `toUpperCase`, `replace`, `length`).
+  - Native `Math` mock object (`sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `pow`, `log`, `exp`, `sqrt`, `min`, `max`, `abs`, `floor`, `ceil`, `round`, `random`, `PI`, `E`, `LN10`, `LN2`, `LOG10E`, `LOG2E`, `SQRT1_2`, `SQRT2`).
+  - Flash utilities & global helpers (`getTimer`, `escape`, `unescape`, `isNaN`, `isFinite`, `parseInt`, `parseFloat`).
 
 ---
 
@@ -80,20 +86,20 @@ To expose C++ objects (such as a game character entity) to ActionScript 3 script
 #include "avm2_vm.h"
 #include <iostream>
 
-class PlayerEntityBridge : public azure_mirage::Avm2Object {
+class PlayerEntityBridge : public avm2::Avm2Object {
 public:
     int hp = 1000;
     int facing = 1; // 1 = right, -1 = left
 
     // Access property: player.hp, player.direct
-    azure_mirage::Avm2Value getProperty(const std::string& name) override {
-        if (name == "hp") return azure_mirage::Avm2Value::integer(hp);
-        if (name == "direct") return azure_mirage::Avm2Value::integer(facing);
-        return azure_mirage::Avm2Object::getProperty(name);
+    avm2::Avm2Value getProperty(const std::string& name) override {
+        if (name == "hp") return avm2::Avm2Value::integer(hp);
+        if (name == "direct") return avm2::Avm2Value::integer(facing);
+        return avm2::Avm2Object::getProperty(name);
     }
 
     // Modify property from AS3: player.hp = 800; player.direct = -1;
-    void setProperty(const std::string& name, const azure_mirage::Avm2Value& val) override {
+    void setProperty(const std::string& name, const avm2::Avm2Value& val) override {
         if (name == "hp") {
             hp = val.toInt();
             return;
@@ -102,20 +108,20 @@ public:
             facing = (val.toInt() < 0) ? -1 : 1;
             return;
         }
-        azure_mirage::Avm2Object::setProperty(name, val);
+        avm2::Avm2Object::setProperty(name, val);
     }
 
     // Call method from AS3: player.loseHp(50);
-    azure_mirage::Avm2Value callMethod(const std::string& name, 
-                                       const std::vector<azure_mirage::Avm2Value>& args, 
-                                       void* caller) override {
+    avm2::Avm2Value callMethod(const std::string& name, 
+                               const std::vector<avm2::Avm2Value>& args, 
+                               void* caller) override {
         if (name == "loseHp" && !args.empty()) {
             int dmg = args[0].toInt();
             hp -= dmg;
             std::cout << "[C++] Player took damage: " << dmg << " (Remaining HP: " << hp << ")\n";
-            return azure_mirage::Avm2Value::undefined();
+            return avm2::Avm2Value::undefined();
         }
-        return azure_mirage::Avm2Object::callMethod(name, args, caller);
+        return avm2::Avm2Object::callMethod(name, args, caller);
     }
 };
 ```
@@ -125,11 +131,11 @@ public:
 Constant Pool data and bytecode methods can be extracted directly from SWF DoABC tags (Tag Code 82) during asset compilation:
 
 ```cpp
-azure_mirage::Avm2ConstantPool pool;
+avm2::Avm2ConstantPool pool;
 pool.strings = {"", "Math", "min", "hp", "loseHp", "direct"};
 pool.multinames = {"", "Math", "min", "hp", "loseHp", "direct"};
 
-azure_mirage::Avm2MethodBody reflectMethod;
+avm2::Avm2MethodBody reflectMethod;
 reflectMethod.name = "reflectDamage";
 reflectMethod.maxStack = 8;
 reflectMethod.localCount = 4;
@@ -149,10 +155,10 @@ reflectMethod.code = {
 auto player = std::make_shared<PlayerEntityBridge>();
 
 // Execute AVM2 method directly
-azure_mirage::Avm2Interpreter::getInstance().execute(
+avm2::Avm2Interpreter::getInstance().execute(
     reflectMethod,
     pool,
-    player.get()
+    player
 );
 
 std::cout << "Player final HP: " << player->hp << "\n";
