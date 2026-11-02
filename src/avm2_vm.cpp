@@ -377,6 +377,30 @@ Avm2Value Avm2Interpreter::execute(
             }
 
             /* Branching & jumps */
+            case 0x0C: { /* ifnlt */
+                int32_t offset = readS24();
+                Avm2Value b = pop(), a = pop();
+                if (!a.lessThan(b)) pc += offset;
+                break;
+            }
+            case 0x0D: { /* ifnle */
+                int32_t offset = readS24();
+                Avm2Value b = pop(), a = pop();
+                if (!a.lessEquals(b)) pc += offset;
+                break;
+            }
+            case 0x0E: { /* ifngt */
+                int32_t offset = readS24();
+                Avm2Value b = pop(), a = pop();
+                if (!a.greaterThan(b)) pc += offset;
+                break;
+            }
+            case 0x0F: { /* ifnge */
+                int32_t offset = readS24();
+                Avm2Value b = pop(), a = pop();
+                if (!a.greaterEquals(b)) pc += offset;
+                break;
+            }
             case 0x10: { /* jump */
                 int32_t offset = readS24();
                 pc += offset;
@@ -430,6 +454,19 @@ Avm2Value Avm2Interpreter::execute(
                 if (a.greaterEquals(b)) pc += offset;
                 break;
             }
+            case 0x19: { /* ifstricteq */
+                int32_t offset = readS24();
+                Avm2Value b = pop(), a = pop();
+                if (a.strictEquals(b)) pc += offset;
+                break;
+            }
+            case 0x1A: { /* ifstrictne */
+                int32_t offset = readS24();
+                Avm2Value b = pop(), a = pop();
+                if (!a.strictEquals(b)) pc += offset;
+                break;
+            }
+            case 0x1D: break; /* popscope */
 
             /* Push constants */
             case 0x20: push(Avm2Value::null()); break;
@@ -477,6 +514,11 @@ Avm2Value Avm2Interpreter::execute(
                 push(Avm2Value::number(pool.getDouble(idx)));
                 break;
             }
+            case 0x30: { /* pushscope */
+                /* tiap awal method selalu getlocal_0 terus pushscope, pop doang biat gak nyampah di stack */
+                pop();
+                break;
+            }
 
             /* Object & function instantiation */
             case 0x40: { /* newfunction method_id */
@@ -502,6 +544,22 @@ Avm2Value Avm2Interpreter::execute(
             }
             case 0x47: return Avm2Value::undefined(); /* returnvoid */
             case 0x48: return pop(); /* returnvalue */
+            case 0x49: { /* constructsuper arg_count */
+                uint32_t argCount = readU30();
+                for (uint32_t i = 0; i < argCount; ++i) pop();
+                pop(); /* pop receiver (this) */
+                break;
+            }
+            case 0x4C: { /* callproplex mn_idx, arg_count */
+                uint32_t mnIdx = readU30();
+                uint32_t argCount = readU30();
+                const std::string& methName = pool.getMultiname(mnIdx);
+                std::vector<Avm2Value> margs(argCount);
+                for (int i = static_cast<int>(argCount) - 1; i >= 0; --i) margs[i] = pop();
+                Avm2Value obj = pop();
+                push(invokeMethod(obj, methName, margs, thisObject, hostContext));
+                break;
+            }
 
             case 0x55: { /* newobject arg_count */
                 uint32_t argCount = readU30();
@@ -528,7 +586,18 @@ Avm2Value Avm2Interpreter::execute(
                 push(Avm2Value::object(std::make_shared<Avm2Object>()));
                 break;
             }
+            case 0x58: { /* newclass class_idx */
+                readU30();
+                pop(); /* pop basetype */
+                push(Avm2Value::object(std::make_shared<Avm2Object>()));
+                break;
+            }
             case 0x5D: { /* findpropstrict mn_idx */
+                readU30();
+                push(locals[0]); /* fallback ke this */
+                break;
+            }
+            case 0x5E: { /* findproperty mn_idx */
                 readU30();
                 push(locals[0]); /* fallback ke this */
                 break;
@@ -682,6 +751,10 @@ Avm2Value Avm2Interpreter::execute(
                 }
                 break;
             }
+            case 0x87: { /* astypelate (val as Class) */
+                pop(); /* pop class object */
+                break;
+            }
 
             /* Math & logic */
             case 0x90: push(Avm2Value::number(-pop().toDouble())); break; /* negate */
@@ -717,6 +790,12 @@ Avm2Value Avm2Interpreter::execute(
             case 0xAE: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.lessEquals(b))); break; }
             case 0xAF: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.greaterThan(b))); break; }
             case 0xB0: { Avm2Value b = pop(), a = pop(); push(Avm2Value::boolean(a.greaterEquals(b))); break; }
+            case 0xB3: { /* istypelate (val is Class) */
+                pop(); /* pop class object */
+                Avm2Value val = pop();
+                push(Avm2Value::boolean(!val.isNullOrUndefined()));
+                break;
+            }
             case 0xB4: { /* in (prop in obj) */
                 Avm2Value obj = pop(), key = pop();
                 bool has = (obj.type == Avm2Type::Object && obj.objVal && obj.objVal->properties.count(key.toString()) > 0);
