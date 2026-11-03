@@ -255,11 +255,23 @@ void Avm2Object::setProperty(const std::string& name, const Avm2Value& val) {
     if (!name.empty() && std::isdigit(static_cast<unsigned char>(name[0]))) {
         char* endPtr = nullptr;
         unsigned long idx = std::strtoul(name.c_str(), &endPtr, 10);
+        /* resize buta ke idx+1. key Dictionary angka gede (getTimer / id) = ratusan MB sekali assign:
+         * if (endPtr && *endPtr == '\0') {
+         *    if (idx >= m_arrayItems.size()) {
+         *        m_arrayItems.resize(idx + 1, Avm2Value::undefined());
+         *    }
+         *    m_arrayItems[idx] = val;
+         * }
+         */
+        /* cuma sync ke m_arrayItems kalo index-nya nyambung append pas di ujung,
+         * key numerik jarang sparse cukup tinggal di properties kek Object AS3
+         */
         if (endPtr && *endPtr == '\0') {
-            if (idx >= m_arrayItems.size()) {
-                m_arrayItems.resize(idx + 1, Avm2Value::undefined());
+            if (idx < m_arrayItems.size()) {
+                m_arrayItems[idx] = val;
+            } else if (idx == m_arrayItems.size()) {
+                m_arrayItems.push_back(val);
             }
-            m_arrayItems[idx] = val;
         }
     }
     properties[name] = val;
@@ -757,6 +769,12 @@ static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std
 
 } // anon namespace
 
+struct Avm2ExecutionFrame {
+    std::vector<Avm2Value> stack;
+    std::vector<Avm2Value> locals;
+};
+static thread_local std::vector<std::unique_ptr<Avm2ExecutionFrame>> s_avm2FramePool;
+
 Avm2Interpreter& Avm2Interpreter::getInstance() {
     static Avm2Interpreter s_inst;
     return s_inst;
@@ -775,12 +793,34 @@ Avm2Value Avm2Interpreter::execute(
     size_t codeLen = method.code.size();
     size_t pc = 0;
 
-    std::vector<Avm2Value> stack;
+    /* Daur ulang buffer frame stack & locals biar ga new/malloc tiap pemanggilan method */
+    std::unique_ptr<Avm2ExecutionFrame> frame;
+    if (!s_avm2FramePool.empty()) {
+        frame = std::move(s_avm2FramePool.back());
+        s_avm2FramePool.pop_back();
+    } else {
+        frame = std::make_unique<Avm2ExecutionFrame>();
+    }
+
+    struct FrameGuard {
+        std::unique_ptr<Avm2ExecutionFrame>& f;
+        ~FrameGuard() {
+            if (f) {
+                f->stack.clear();
+                f->locals.clear();
+                s_avm2FramePool.push_back(std::move(f));
+            }
+        }
+    } guard{frame};
+
+    auto& stack = frame->stack;
+    auto& locals = frame->locals;
+    stack.clear();
     stack.reserve(std::max(16, static_cast<int>(method.maxStack)));
 
     /* Siapin register local variables */
     size_t numLocals = std::max(static_cast<size_t>(method.localCount), args.size() + 1);
-    std::vector<Avm2Value> locals(numLocals, Avm2Value::undefined());
+    locals.assign(numLocals, Avm2Value::undefined());
 
     /* locals[0] selalu `this` di ActionScript 3 */
     if (thisObject) {
@@ -826,7 +866,12 @@ Avm2Value Avm2Interpreter::execute(
     };
 
     /* Loop bytecode execution */
+    constexpr uint32_t MAX_OPS = 100000;
+    uint32_t opCount = 0;
     while (pc < codeLen) {
+        if (++opCount > MAX_OPS) {
+            break;
+        }
         uint8_t op = code[pc++];
         switch (op) {
             case 0x01: /* debugnop */
@@ -1347,6 +1392,7 @@ Avm2Value Avm2Interpreter::execute(
             }
             case 0x63: { /* setlocal n */
                 uint32_t n = readU30();
+                if (n > 256) break; /* bytecode corrupt guard */
                 if (n >= locals.size()) locals.resize(n + 1, Avm2Value::undefined());
                 locals[n] = pop();
                 break;
