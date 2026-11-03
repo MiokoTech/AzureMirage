@@ -112,7 +112,14 @@ std::string Avm2Value::toString() const {
             return ss.str();
         }
         case Avm2Type::String: return sVal;
-        case Avm2Type::Object: return "[object Object]";
+        case Avm2Type::Object: {
+            /* delegasikan ke callMethod("toString") biar Dictionary key & FighterMain/HitVO toString() presisi */
+            if (objVal) {
+                Avm2Value strVal = objVal->callMethod("toString", {}, nullptr);
+                if (strVal.isString()) return strVal.sVal;
+            }
+            return "[object Object]";
+        }
         case Avm2Type::Array: return "[object Array]";
         default: return "";
     }
@@ -376,6 +383,10 @@ Avm2Value Avm2Object::callMethod(const std::string& name, const std::vector<Avm2
         return Avm2Value::undefined();
     }
     if (name == "toString") {
+        auto it = properties.find("__toString");
+        if (it != properties.end() && it->second.isString()) {
+            return it->second;
+        }
         if (!m_arrayItems.empty()) {
             std::string res;
             for (size_t i = 0; i < m_arrayItems.size(); ++i) {
@@ -1099,6 +1110,11 @@ Avm2Value Avm2Interpreter::execute(
                     obj->setProperty("y", cArgs.size() >= 2 ? cArgs[1] : Avm2Value::number(0.0));
                     obj->setProperty("width", cArgs.size() >= 3 ? cArgs[2] : Avm2Value::number(0.0));
                     obj->setProperty("height", cArgs.size() >= 4 ? cArgs[3] : Avm2Value::number(0.0));
+                } else {
+                    /* catat linkage className & default x/y=0 buat MovieClip summon dinamis (new wall1(), new Shadow(), dll) */
+                    obj->setProperty("__className", Avm2Value::string(clsName));
+                    obj->setProperty("x", Avm2Value::number(0.0));
+                    obj->setProperty("y", Avm2Value::number(0.0));
                 }
                 push(Avm2Value::object(obj));
                 break;
