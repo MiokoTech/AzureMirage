@@ -121,8 +121,21 @@ std::string Avm2Value::toString() const {
 bool Avm2Value::equals(const Avm2Value& other) const {
     if (type == other.type) return strictEquals(other);
     if (isNullOrUndefined() && other.isNullOrUndefined()) return true;
-    if (isNumber() && other.isNumber()) return toDouble() == other.toDouble();
-    if (isString() || other.isString()) return toString() == other.toString();
+    /* ECMA-262 / AS3 Abstract Equality: boolean diconvert ke number dulu */
+    if (type == Avm2Type::Bool) return Avm2Value::number(toDouble()).equals(other);
+    if (other.type == Avm2Type::Bool) return equals(Avm2Value::number(other.toDouble()));
+    if ((isNumber() && other.isString()) || (isString() && other.isNumber())) {
+        double a = toDouble();
+        double b = other.toDouble();
+        if (std::isnan(a) || std::isnan(b)) return false;
+        return a == b;
+    }
+    if (isNumber() && other.isNumber()) {
+        double a = toDouble();
+        double b = other.toDouble();
+        if (std::isnan(a) || std::isnan(b)) return false;
+        return a == b;
+    }
     return false;
 }
 
@@ -142,19 +155,43 @@ bool Avm2Value::strictEquals(const Avm2Value& other) const {
 }
 
 bool Avm2Value::lessThan(const Avm2Value& other) const {
-    return toDouble() < other.toDouble();
+    if (isString() && other.isString()) {
+        return toString() < other.toString();
+    }
+    double a = toDouble();
+    double b = other.toDouble();
+    if (std::isnan(a) || std::isnan(b)) return false;
+    return a < b;
 }
 
 bool Avm2Value::lessEquals(const Avm2Value& other) const {
-    return toDouble() <= other.toDouble();
+    if (isString() && other.isString()) {
+        return toString() <= other.toString();
+    }
+    double a = toDouble();
+    double b = other.toDouble();
+    if (std::isnan(a) || std::isnan(b)) return false;
+    return a <= b;
 }
 
 bool Avm2Value::greaterThan(const Avm2Value& other) const {
-    return toDouble() > other.toDouble();
+    if (isString() && other.isString()) {
+        return toString() > other.toString();
+    }
+    double a = toDouble();
+    double b = other.toDouble();
+    if (std::isnan(a) || std::isnan(b)) return false;
+    return a > b;
 }
 
 bool Avm2Value::greaterEquals(const Avm2Value& other) const {
-    return toDouble() >= other.toDouble();
+    if (isString() && other.isString()) {
+        return toString() >= other.toString();
+    }
+    double a = toDouble();
+    double b = other.toDouble();
+    if (std::isnan(a) || std::isnan(b)) return false;
+    return a >= b;
 }
 
 /* Operasi aritmatika & concat string ala ActionScript */
@@ -207,6 +244,17 @@ Avm2Value Avm2Object::getProperty(const std::string& name) {
 }
 
 void Avm2Object::setProperty(const std::string& name, const Avm2Value& val) {
+    /* note: kalau key berupa indeks numerik array (0, 1, 2...), sinkronkan langsung ke m_arrayItems */
+    if (!name.empty() && std::isdigit(static_cast<unsigned char>(name[0]))) {
+        char* endPtr = nullptr;
+        unsigned long idx = std::strtoul(name.c_str(), &endPtr, 10);
+        if (endPtr && *endPtr == '\0') {
+            if (idx >= m_arrayItems.size()) {
+                m_arrayItems.resize(idx + 1, Avm2Value::undefined());
+            }
+            m_arrayItems[idx] = val;
+        }
+    }
     properties[name] = val;
 }
 
@@ -1302,7 +1350,25 @@ Avm2Value Avm2Interpreter::execute(
                 if (r < locals.size()) locals[r] = Avm2Value::number(locals[r].toDouble() - 1.0);
                 break;
             }
-            case 0x95:
+            case 0x95: { /* typeof */
+                Avm2Value val = pop();
+                std::string tName;
+                switch (val.type) {
+                    case Avm2Type::Undefined: tName = "undefined"; break;
+                    case Avm2Type::Null: tName = "object"; break;
+                    case Avm2Type::Bool: tName = "boolean"; break;
+                    case Avm2Type::Int:
+                    case Avm2Type::Double: tName = "number"; break;
+                    case Avm2Type::String: tName = "string"; break;
+                    case Avm2Type::Object:
+                    case Avm2Type::Array:
+                    default:
+                        tName = "object";
+                        break;
+                }
+                push(Avm2Value::string(tName));
+                break;
+            }
             case 0x96: push(Avm2Value::boolean(!pop().toBool())); break; /* not */
             case 0x97: push(Avm2Value::integer(~pop().toInt())); break; /* bitnot */
 
