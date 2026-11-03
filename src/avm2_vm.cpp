@@ -542,6 +542,8 @@ static std::shared_ptr<MathMockObject> s_mathMock = std::make_shared<MathMockObj
 /* Helper cari properti di target object atau cari ke this */
 static Avm2Value resolveProperty(const Avm2Value& obj, const std::string& name, std::shared_ptr<Avm2Object> thisObj) {
     if (name == "Math") return Avm2Value::object(s_mathMock);
+    if (name == "Infinity") return Avm2Value::number(std::numeric_limits<double>::infinity());
+    if (name == "NaN") return Avm2Value::number(std::numeric_limits<double>::quiet_NaN());
     if (obj.type == Avm2Type::String && name == "length") {
         return Avm2Value::integer(static_cast<int32_t>(obj.sVal.size()));
     }
@@ -565,9 +567,25 @@ static void assignProperty(Avm2Value& obj, const std::string& name, const Avm2Va
 }
 
 static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std::vector<Avm2Value>& args, std::shared_ptr<Avm2Object> thisObj, void* hostContext) {
-    /* String prototype methods */
+    /* String prototype & closure Function.prototype.call/apply */
     if (obj.type == Avm2Type::String) {
         const std::string& str = obj.sVal;
+        if (name == "call") {
+            /* Function.prototype.call(thisArg, arg1, arg2, ...) pada closure string */
+            Avm2Value recv = (!args.empty() && !args[0].isNullOrUndefined()) ? args[0] : (thisObj ? Avm2Value::object(thisObj) : Avm2Value::undefined());
+            std::vector<Avm2Value> fArgs;
+            if (args.size() > 1) fArgs.assign(args.begin() + 1, args.end());
+            return invokeMethod(recv, str, fArgs, thisObj, hostContext);
+        }
+        if (name == "apply") {
+            /* Function.prototype.apply(thisArg, argArray) pada closure string */
+            Avm2Value recv = (!args.empty() && !args[0].isNullOrUndefined()) ? args[0] : (thisObj ? Avm2Value::object(thisObj) : Avm2Value::undefined());
+            std::vector<Avm2Value> fArgs;
+            if (args.size() >= 2 && args[1].type == Avm2Type::Object && args[1].objVal) {
+                fArgs = args[1].objVal->m_arrayItems;
+            }
+            return invokeMethod(recv, str, fArgs, thisObj, hostContext);
+        }
         if (name == "indexOf" && !args.empty()) {
             std::string sub = args[0].toString();
             size_t pos = str.find(sub);
@@ -647,6 +665,21 @@ static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std
     }
 
     /* Global helper functions */
+    if (name == "String") {
+        return args.empty() ? Avm2Value::string("") : Avm2Value::string(args[0].toString());
+    }
+    if (name == "Number") {
+        return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(args[0].toDouble());
+    }
+    if (name == "int") {
+        return args.empty() ? Avm2Value::integer(0) : Avm2Value::integer(args[0].toInt());
+    }
+    if (name == "uint") {
+        return args.empty() ? Avm2Value::integer(0) : Avm2Value::integer(static_cast<int32_t>(static_cast<uint32_t>(args[0].toInt())));
+    }
+    if (name == "Boolean") {
+        return args.empty() ? Avm2Value::boolean(false) : Avm2Value::boolean(args[0].toBool());
+    }
     if (name == "isNaN" && !args.empty()) {
         return Avm2Value::boolean(std::isnan(args[0].toDouble()));
     }
@@ -1025,6 +1058,16 @@ Avm2Value Avm2Interpreter::execute(
                 push(Avm2Value::string("method_" + std::to_string(mid)));
                 break;
             }
+            case 0x41: { /* call arg_count */
+                /* AVM2 spec: stack ..., function, receiver, arg1..argN -> ..., value */
+                uint32_t argCount = readU30();
+                std::vector<Avm2Value> cArgs(argCount);
+                for (int i = static_cast<int>(argCount) - 1; i >= 0; --i) cArgs[i] = pop();
+                Avm2Value receiver = pop();
+                Avm2Value funcVal = pop();
+                push(invokeMethod(receiver, funcVal.toString(), cArgs, thisObject, hostContext));
+                break;
+            }
             case 0x42: { /* construct arg_count */
                 uint32_t argCount = readU30();
                 for (uint32_t i = 0; i < argCount; ++i) pop();
@@ -1149,14 +1192,25 @@ Avm2Value Avm2Interpreter::execute(
                 push(resolveProperty(Avm2Value::undefined(), propName, thisObject));
                 break;
             }
-            case 0x64: { /* getglobalslot slot_idx */
-                readU30();
-                push(Avm2Value::undefined());
+            case 0x64: { /* getglobalscope */
+                /* case 0x64: { readU30(); push(Avm2Value::undefined()); break; } */
+                push(locals[0]);
                 break;
             }
             case 0x65: { /* getscopeobject scope_idx */
                 if (pc < codeLen) ++pc;
                 push(locals[0]);
+                break;
+            }
+            case 0x6E: { /* getglobalslot slot_idx */
+                uint32_t sidx = readU30();
+                push(resolveProperty(locals[0], "globalslot_" + std::to_string(sidx), thisObject));
+                break;
+            }
+            case 0x6F: { /* setglobalslot slot_idx */
+                uint32_t sidx = readU30();
+                Avm2Value val = pop();
+                assignProperty(locals[0], "globalslot_" + std::to_string(sidx), val, thisObject);
                 break;
             }
 
@@ -1335,14 +1389,19 @@ Avm2Value Avm2Interpreter::execute(
                 push(Avm2Value::number(v.toDouble() + 1.0));
                 break;
             }
-            case 0x92: { /* decrement */
-                Avm2Value v = pop();
-                push(Avm2Value::number(v.toDouble() - 1.0));
-                break;
-            }
-            case 0x93: { /* inclocal r */
+            /* jir 0x92 ma 0x93 ketuker, di spek AVM2 0x92 = inclocal (u30), 0x93 = decrement (0 arg) */
+            /*  
+             * case 0x92: { Avm2Value v = pop(); push(Avm2Value::number(v.toDouble() - 1.0)); break; }
+             * case 0x93: { uint32_t r = readU30(); if (r < locals.size()) locals[r] = Avm2Value::number(locals[r].toDouble() + 1.0); break; }
+             */
+            case 0x92: { /* inclocal r */
                 uint32_t r = readU30();
                 if (r < locals.size()) locals[r] = Avm2Value::number(locals[r].toDouble() + 1.0);
+                break;
+            }
+            case 0x93: { /* decrement */
+                Avm2Value v = pop();
+                push(Avm2Value::number(v.toDouble() - 1.0));
                 break;
             }
             case 0x94: { /* declocal r */
