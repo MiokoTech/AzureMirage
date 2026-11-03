@@ -29,6 +29,7 @@
 #include <limits>
 #include <chrono>
 #include <algorithm>
+#include <sstream>
 
 namespace avm2 {
 
@@ -56,9 +57,14 @@ int32_t Avm2Value::toInt() const {
     switch (type) {
         case Avm2Type::Bool: return bVal ? 1 : 0;
         case Avm2Type::Int: return iVal;
-        case Avm2Type::Double: return static_cast<int32_t>(dVal);
+        case Avm2Type::Double: {
+            if (std::isnan(dVal) || std::isinf(dVal)) return 0;
+            return static_cast<int32_t>(dVal);
+        }
         case Avm2Type::String: {
-            try { return std::stol(sVal); } catch (...) { return 0; }
+            double d = toDouble();
+            if (std::isnan(d) || std::isinf(d)) return 0;
+            return static_cast<int32_t>(d);
         }
         default: return 0;
     }
@@ -66,13 +72,26 @@ int32_t Avm2Value::toInt() const {
 
 double Avm2Value::toDouble() const {
     switch (type) {
+        case Avm2Type::Undefined: return std::numeric_limits<double>::quiet_NaN();
+        case Avm2Type::Null: return 0.0;
         case Avm2Type::Bool: return bVal ? 1.0 : 0.0;
         case Avm2Type::Int: return static_cast<double>(iVal);
         case Avm2Type::Double: return dVal;
         case Avm2Type::String: {
-            try { return std::stod(sVal); } catch (...) { return 0.0; }
+            if (sVal.empty()) return 0.0;
+            try {
+                size_t idx = 0;
+                double val = std::stod(sVal, &idx);
+                while (idx < sVal.size() && (sVal[idx] == ' ' || sVal[idx] == '\t' || sVal[idx] == '\r' || sVal[idx] == '\n')) {
+                    idx++;
+                }
+                if (idx < sVal.size()) return std::numeric_limits<double>::quiet_NaN();
+                return val;
+            } catch (...) {
+                return std::numeric_limits<double>::quiet_NaN();
+            }
         }
-        default: return 0.0;
+        default: return std::numeric_limits<double>::quiet_NaN();
     }
 }
 
@@ -82,7 +101,16 @@ std::string Avm2Value::toString() const {
         case Avm2Type::Null: return "null";
         case Avm2Type::Bool: return bVal ? "true" : "false";
         case Avm2Type::Int: return std::to_string(iVal);
-        case Avm2Type::Double: return std::to_string(dVal);
+        case Avm2Type::Double: {
+            if (std::isnan(dVal)) return "NaN";
+            if (std::isinf(dVal)) return dVal > 0 ? "Infinity" : "-Infinity";
+            if (dVal == static_cast<double>(static_cast<int64_t>(dVal))) {
+                return std::to_string(static_cast<int64_t>(dVal));
+            }
+            std::ostringstream ss;
+            ss << dVal;
+            return ss.str();
+        }
         case Avm2Type::String: return sVal;
         case Avm2Type::Object: return "[object Object]";
         case Avm2Type::Array: return "[object Array]";
@@ -310,6 +338,49 @@ Avm2Value Avm2Object::callMethod(const std::string& name, const std::vector<Avm2
         }
         return Avm2Value::string("[object Object]");
     }
+    if (name == "indexOf" && !args.empty()) {
+        const auto& search = args[0];
+        int from = (args.size() >= 2) ? args[1].toInt() : 0;
+        int sz = static_cast<int>(m_arrayItems.size());
+        if (from < 0) from = std::max(0, sz + from);
+        for (int i = from; i < sz; ++i) {
+            if (m_arrayItems[i].strictEquals(search) || m_arrayItems[i].equals(search)) {
+                return Avm2Value::integer(i);
+            }
+        }
+        return Avm2Value::integer(-1);
+    }
+    if (name == "lastIndexOf" && !args.empty()) {
+        const auto& search = args[0];
+        int sz = static_cast<int>(m_arrayItems.size());
+        int from = (args.size() >= 2) ? args[1].toInt() : (sz - 1);
+        if (from >= sz) from = sz - 1;
+        for (int i = from; i >= 0; --i) {
+            if (m_arrayItems[i].strictEquals(search) || m_arrayItems[i].equals(search)) {
+                return Avm2Value::integer(i);
+            }
+        }
+        return Avm2Value::integer(-1);
+    }
+    if (name == "intersects" && !args.empty() && args[0].type == Avm2Type::Object) {
+        auto other = args[0].objVal;
+        if (other) {
+            double rx1 = getProperty("x").toDouble();
+            double ry1 = getProperty("y").toDouble();
+            double rw1 = getProperty("width").toDouble();
+            double rh1 = getProperty("height").toDouble();
+
+            double rx2 = other->getProperty("x").toDouble();
+            double ry2 = other->getProperty("y").toDouble();
+            double rw2 = other->getProperty("width").toDouble();
+            double rh2 = other->getProperty("height").toDouble();
+
+            bool noOverlap = (rx1 + rw1 <= rx2) || (rx2 + rw2 <= rx1) ||
+                             (ry1 + rh1 <= ry2) || (ry2 + rh2 <= ry1);
+            return Avm2Value::boolean(!noOverlap && rw1 > 0.0 && rh1 > 0.0 && rw2 > 0.0 && rh2 > 0.0);
+        }
+        return Avm2Value::boolean(false);
+    }
     if (name == "valueOf") {
         return Avm2Value::undefined();
     }
@@ -338,28 +409,45 @@ public:
 
     Avm2Value callMethod(const std::string& name, const std::vector<Avm2Value>& args, void* hostContext) override {
         if (name == "min") {
-            if (args.empty()) return Avm2Value::number(0.0);
+            if (args.empty()) return Avm2Value::number(std::numeric_limits<double>::infinity());
             double val = args[0].toDouble();
-            for (size_t i = 1; i < args.size(); ++i) val = std::min(val, args[i].toDouble());
+            for (size_t i = 1; i < args.size(); ++i) {
+                double v = args[i].toDouble();
+                if (std::isnan(v)) return Avm2Value::number(v);
+                val = std::min(val, v);
+            }
             return Avm2Value::number(val);
         }
         if (name == "max") {
-            if (args.empty()) return Avm2Value::number(0.0);
+            if (args.empty()) return Avm2Value::number(-std::numeric_limits<double>::infinity());
             double val = args[0].toDouble();
-            for (size_t i = 1; i < args.size(); ++i) val = std::max(val, args[i].toDouble());
+            for (size_t i = 1; i < args.size(); ++i) {
+                double v = args[i].toDouble();
+                if (std::isnan(v)) return Avm2Value::number(v);
+                val = std::max(val, v);
+            }
             return Avm2Value::number(val);
         }
         if (name == "abs") {
             return args.empty() ? Avm2Value::number(0.0) : Avm2Value::number(std::abs(args[0].toDouble()));
         }
         if (name == "floor") {
-            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::integer(static_cast<int32_t>(std::floor(args[0].toDouble())));
+            if (args.empty()) return Avm2Value::number(std::numeric_limits<double>::quiet_NaN());
+            double d = args[0].toDouble();
+            if (std::isnan(d)) return Avm2Value::number(d);
+            return Avm2Value::number(std::floor(d));
         }
         if (name == "ceil") {
-            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::integer(static_cast<int32_t>(std::ceil(args[0].toDouble())));
+            if (args.empty()) return Avm2Value::number(std::numeric_limits<double>::quiet_NaN());
+            double d = args[0].toDouble();
+            if (std::isnan(d)) return Avm2Value::number(d);
+            return Avm2Value::number(std::ceil(d));
         }
         if (name == "round") {
-            return args.empty() ? Avm2Value::number(0.0) : Avm2Value::integer(static_cast<int32_t>(std::round(args[0].toDouble())));
+            if (args.empty()) return Avm2Value::number(std::numeric_limits<double>::quiet_NaN());
+            double d = args[0].toDouble();
+            if (std::isnan(d)) return Avm2Value::number(d);
+            return Avm2Value::number(std::round(d));
         }
         if (name == "random") {
             return Avm2Value::number(static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
@@ -521,14 +609,14 @@ static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std
         try {
             return Avm2Value::integer(std::stoi(args[0].toString()));
         } catch (...) {
-            return Avm2Value::integer(0);
+            return Avm2Value::number(std::numeric_limits<double>::quiet_NaN());
         }
     }
     if (name == "parseFloat" && !args.empty()) {
         try {
             return Avm2Value::number(std::stod(args[0].toString()));
         } catch (...) {
-            return Avm2Value::number(0.0);
+            return Avm2Value::number(std::numeric_limits<double>::quiet_NaN());
         }
     }
     if (name == "getTimer") {
@@ -905,11 +993,23 @@ Avm2Value Avm2Interpreter::execute(
                 break;
             }
             case 0x4a: { /* constructprop mn_idx, arg_count */
-                readU30();
+                uint32_t mnIdx = readU30();
                 uint32_t argCount = readU30();
-                for (uint32_t i = 0; i < argCount; ++i) pop();
-                pop();
-                push(Avm2Value::object(std::make_shared<Avm2Object>()));
+                std::vector<Avm2Value> cArgs(argCount);
+                for (int i = static_cast<int>(argCount) - 1; i >= 0; --i) cArgs[i] = pop();
+                pop(); /* pop receiver */
+                const std::string& clsName = pool.getMultiname(mnIdx);
+                auto obj = std::make_shared<Avm2Object>();
+                if (clsName == "Point" || clsName.find("Point") != std::string::npos) {
+                    obj->setProperty("x", cArgs.size() >= 1 ? cArgs[0] : Avm2Value::number(0.0));
+                    obj->setProperty("y", cArgs.size() >= 2 ? cArgs[1] : Avm2Value::number(0.0));
+                } else if (clsName == "Rectangle" || clsName.find("Rectangle") != std::string::npos) {
+                    obj->setProperty("x", cArgs.size() >= 1 ? cArgs[0] : Avm2Value::number(0.0));
+                    obj->setProperty("y", cArgs.size() >= 2 ? cArgs[1] : Avm2Value::number(0.0));
+                    obj->setProperty("width", cArgs.size() >= 3 ? cArgs[2] : Avm2Value::number(0.0));
+                    obj->setProperty("height", cArgs.size() >= 4 ? cArgs[3] : Avm2Value::number(0.0));
+                }
+                push(Avm2Value::object(obj));
                 break;
             }
             case 0x47: return Avm2Value::undefined(); /* returnvoid */
@@ -1061,9 +1161,26 @@ Avm2Value Avm2Interpreter::execute(
             case 0x6A: { /* deleteproperty mn_idx */
                 uint32_t mnIdx = readU30();
                 const std::string& propName = pool.getMultiname(mnIdx);
+                if (propName == "<MultinameL>" || propName == "<RTQNameL>") {
+                    Avm2Value key = pop();
+                    Avm2Value obj = pop();
+                    if (obj.type == Avm2Type::Object && obj.objVal) {
+                        obj.objVal->properties.erase(key.toString());
+                    }
+                } else {
+                    Avm2Value obj = pop();
+                    if (obj.type == Avm2Type::Object && obj.objVal) {
+                        obj.objVal->properties.erase(propName);
+                    }
+                }
+                push(Avm2Value::boolean(true));
+                break;
+            }
+            case 0x6B: { /* deletepropertylate */
+                Avm2Value key = pop();
                 Avm2Value obj = pop();
                 if (obj.type == Avm2Type::Object && obj.objVal) {
-                    obj.objVal->properties.erase(propName);
+                    obj.objVal->properties.erase(key.toString());
                 }
                 push(Avm2Value::boolean(true));
                 break;
@@ -1295,3 +1412,4 @@ Avm2Value Avm2Interpreter::execute(
 }
 
 } // namespace avm2
+
