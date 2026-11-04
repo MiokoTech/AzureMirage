@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=18&pause=1200&color=C77DFF&center=true&vCenter=true&width=620&lines=Run+DoABC+bytecode+without+Flash+Player;125%2B+core+AVM2+opcodes;Native+C%2B%2B+host+bridge;Binary+cache+loading+in+under+1+ms" alt="Typing SVG">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=18&pause=1200&color=C77DFF&center=true&vCenter=true&width=620&lines=Run+DoABC+bytecode+without+Flash+Player;130%2B+core+AVM2+opcodes;Native+C%2B%2B+host+bridge;Binary+cache+loading+in+under+1+ms" alt="Typing SVG">
 </p>
 
 ---
@@ -41,26 +41,39 @@ Directly executes the original DoABC instruction bytecode via an efficient C++ s
 ## Key Features
 
 - **Standalone & Embeddable**: Simply include the `avm2_vm.h` header and `avm2_vm.cpp` into your C++ project.
-- **Support for 125+ Core AVM2 Opcodes**:
+- **Support for 130+ Core AVM2 Opcodes**:
   - Stack Manipulation: `dup`, `swap`, `pop`, `kill`.
   - Constant Loading: `pushbyte`, `pushshort`, `pushint`, `pushuint`, `pushdouble`, `pushstring`, `pushtrue`, `pushfalse`, `pushnull`, `pushundefined`, `pushnan`.
   - Local Registers: `getlocal_0` to `getlocal_3`, `setlocal_0` to `setlocal_3`, `getlocal n`, `setlocal n`, `inclocal`, `declocal`.
   - Branching & Control Flow: `jump`, `iftrue`, `iffalse`, `ifeq`, `ifne`, `iflt`, `ifle`, `ifgt`, `ifge`, `ifnlt`, `ifnle`, `ifngt`, `ifnge`, `ifstricteq`, `ifstrictne`, `lookupswitch`.
-  - Scope Stack & Constructors: `pushscope`, `popscope`, `constructsuper`, `callproplex`, `newclass`, `findproperty`, `findpropstrict`.
-  - Iteration & Dynamic Typing: `hasnext2`, `nextvalue`, `nextname`, `astype`, `istype`, `instanceof`, `astypelate`, `istypelate`.
+  - Scope Stack & Constructors: `pushscope`, `popscope`, `getglobalscope`, `constructsuper`, `callproplex`, `newclass`, `findproperty`, `findpropstrict`.
+  - Iteration & Dynamic Typing: `typeof`, `hasnext2`, `nextvalue`, `nextname`, `astype`, `istype`, `instanceof`, `astypelate`, `istypelate`.
   - Arithmetic & Bitwise: `add`, `subtract`, `multiply`, `divide`, `modulo`, `negate`, `increment`, `decrement`, `bitand`, `bitor`, `bitxor`, `bitnot`, `lshift`, `rshift`, `urshift`, `negate_i`, `add_i`, `subtract_i`, `multiply_i`.
-  - Objects & Dynamic Properties: `getproperty`, `setproperty`, `initproperty`, `deleteproperty`, `getglobalslot`, `getdescendants`, `newcatch`, `getlex`, `newobject`, `newarray`, `newactivation`, `getslot`, `setslot`, `in`, `construct`, `constructprop`.
-  - Function & Method Calls: `callproperty`, `callpropvoid`, `callstatic`, `callsupervoid`, `returnvoid`, `returnvalue`, `newfunction` (closure).
-  - Dynamic Indexing: Supports `<MultinameL>` and `<RTQNameL>` for runtime-based array and dictionary access (`obj[key]`).
+  - Objects & Dynamic Properties: `getproperty`, `setproperty`, `initproperty`, `deleteproperty`, `deletepropertylate`, `getglobalslot`, `setglobalslot`, `getdescendants`, `newcatch`, `getlex`, `newobject`, `newarray`, `newactivation`, `getslot`, `setslot`, `in`, `construct`, `constructprop`.
+  - Function & Method Calls: `call`, `callproperty`, `callpropvoid`, `callstatic`, `callsupervoid`, `returnvoid`, `returnvalue`, `newfunction` (closure).
+  - Dynamic Indexing & Deletion: Supports `<MultinameL>` and `<RTQNameL>` for runtime array / dictionary access and dynamic property deletion (`delete obj[key]`).
   - Coercion & Casting: `convert_s`, `convert_i`, `convert_u`, `convert_d`, `convert_b`, `coerce`, `coerce_a`, `coerce_s`.
   - Debug & PC Safety: `debug`, `debugline`, `debugfile` (operand consumers ensuring zero PC drift on debug DoABC builds).
+- **ECMA-262 & ActionScript 3 Coercion**:
+  - Full ECMA-262 Abstract Equality (`==`, `!=`) implementing boolean-to-numeric coercion, string-to-numeric conversion, and strict IEEE 754 `NaN != NaN` semantics.
+  - Relational comparisons (`<`, `<=`, `>`, `>=`) supporting lexicographical comparison for strings and IEEE 754 numeric comparisons with `NaN` safety.
+  - Strict numeric coercion (`toInt`, `toDouble`) with whitespace trimming, and `NaN` / `Infinity` protection.
+  - Dynamic Object serialization (`toString()`) delegated to `callMethod("toString")` / `__toString` for precise `Dictionary` hashing and custom object representations.
 - **C++ Host Interop / Bridge**: Through the virtual base class `Avm2Object`, C++ hosts can expose variables, coordinates, game methods, and callbacks to the AS3 script environment with native performance.
 - **Built-in Simulation & Standard Library**:
-  - Native `Array` prototype methods (`indexOf`, `push`, `pop`, `shift`, `unshift`, `slice`, `splice`, `concat`, `join`, `reverse`, `sort`, `length`).
+  - Native `Array` prototype methods (`indexOf`, `lastIndexOf`, `push`, `pop`, `shift`, `unshift`, `slice`, `splice`, `concat`, `join`, `reverse`, `sort`, `length`) with automatic numeric index synchronization (`arr[i] = val`).
   - Native `Object` prototype methods (`hasOwnProperty`, `toString`, `valueOf`).
   - Native `String` prototype methods (`indexOf`, `substr`, `substring`, `charAt`, `charCodeAt`, `split`, `toLowerCase`, `toUpperCase`, `replace`, `length`).
+  - Geometry mock objects: built-in `Point` (`x`, `y`) and `Rectangle` (`x`, `y`, `width`, `height`, `intersects`) via `constructprop` (0x4A).
+  - Dynamic MovieClip linkage class metadata preservation (`__className`, default coordinates `x`, `y`).
   - Native `Math` mock object (`sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `pow`, `log`, `exp`, `sqrt`, `min`, `max`, `abs`, `floor`, `ceil`, `round`, `random`, `PI`, `E`, `LN10`, `LN2`, `LOG10E`, `LOG2E`, `SQRT1_2`, `SQRT2`).
-  - Flash utilities & global helpers (`getTimer`, `escape`, `unescape`, `isNaN`, `isFinite`, `parseInt`, `parseFloat`).
+  - Global type conversion functions (`String`, `Number`, `int`, `uint`, `Boolean`).
+  - Flash utilities & global helpers (`getTimer`, `escape`, `unescape`, `isNaN`, `isFinite`, `parseInt`, `parseFloat`, `Infinity`, `NaN`).
+  - Function closures: invocation via `Function.prototype.call` and `Function.prototype.apply`.
+- **Memory & Execution Safety**:
+  - Thread-local Frame Recycling: `s_avm2FramePool` reuses execution frames (stack and local register vectors) across calls, eliminating per-call heap allocations and memory fragmentation.
+  - Sparse Key Protection: Prevents unbounded array reallocation by isolating large numeric IDs or timestamps into properties hashmap.
+  - Instruction Execution Ceiling: Hard limit (`MAX_OPS = 100000`) and register bounds checking (`n <= 256`) to protect host processes from corrupt or infinite DoABC execution loops.
 
 ---
 
