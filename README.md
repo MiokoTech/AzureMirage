@@ -41,18 +41,18 @@ Directly executes the original DoABC instruction bytecode via an efficient C++ s
 ## Key Features
 
 - **Standalone & Embeddable**: Simply include the `avm2_vm.h` header and `avm2_vm.cpp` into your C++ project.
-- **Support for 130+ Core AVM2 Opcodes**:
+- **Support for 140+ Core AVM2 Opcodes**:
   - Stack Manipulation: `dup`, `swap`, `pop`, `kill`.
   - Constant Loading: `pushbyte`, `pushshort`, `pushint`, `pushuint`, `pushdouble`, `pushstring`, `pushtrue`, `pushfalse`, `pushnull`, `pushundefined`, `pushnan`.
   - Local Registers: `getlocal_0` to `getlocal_3`, `setlocal_0` to `setlocal_3`, `getlocal n`, `setlocal n`, `inclocal`, `declocal`.
-  - Branching & Control Flow: `jump`, `iftrue`, `iffalse`, `ifeq`, `ifne`, `iflt`, `ifle`, `ifgt`, `ifge`, `ifnlt`, `ifnle`, `ifngt`, `ifnge`, `ifstricteq`, `ifstrictne`, `lookupswitch`.
+  - Branching & Control Flow: `jump`, `iftrue`, `iffalse`, `ifeq`, `ifne`, `iflt`, `ifle`, `ifgt`, `ifge`, `ifnlt`, `ifnle`, `ifngt`, `ifnge`, `ifstricteq`, `ifstrictne`, `lookupswitch`, `throw`.
   - Scope Stack & Constructors: `pushscope`, `popscope`, `getglobalscope`, `constructsuper`, `callproplex`, `newclass`, `findproperty`, `findpropstrict`.
   - Iteration & Dynamic Typing: `typeof`, `hasnext2`, `nextvalue`, `nextname`, `astype`, `istype`, `instanceof`, `astypelate`, `istypelate`.
   - Arithmetic & Bitwise: `add`, `subtract`, `multiply`, `divide`, `modulo`, `negate`, `increment`, `decrement`, `bitand`, `bitor`, `bitxor`, `bitnot`, `lshift`, `rshift`, `urshift`, `negate_i`, `add_i`, `subtract_i`, `multiply_i`.
-  - Objects & Dynamic Properties: `getproperty`, `setproperty`, `initproperty`, `deleteproperty`, `deletepropertylate`, `getglobalslot`, `setglobalslot`, `getdescendants`, `newcatch`, `getlex`, `newobject`, `newarray`, `newactivation`, `getslot`, `setslot`, `in`, `construct`, `constructprop`.
-  - Function & Method Calls: `call`, `callproperty`, `callpropvoid`, `callstatic`, `callsupervoid`, `returnvoid`, `returnvalue`, `newfunction` (closure).
+  - Objects & Dynamic Properties: `getproperty`, `setproperty`, `initproperty`, `deleteproperty`, `deletepropertylate`, `getglobalslot`, `setglobalslot`, `getdescendants`, `newcatch`, `getlex`, `newobject`, `newarray`, `newactivation`, `getslot`, `setslot`, `in`, `construct`, `constructprop`, `getsuper`, `setsuper`.
+  - Function & Method Calls: `call`, `callproperty`, `callpropvoid`, `callstatic`, `callmethod`, `callsuper`, `callinterface`, `callsupervoid`, `returnvoid`, `returnvalue`, `newfunction` (closure).
   - Dynamic Indexing & Deletion: Supports `<MultinameL>` and `<RTQNameL>` for runtime array / dictionary access and dynamic property deletion (`delete obj[key]`).
-  - Coercion & Casting: `convert_s`, `convert_i`, `convert_u`, `convert_d`, `convert_b`, `coerce`, `coerce_a`, `coerce_s`.
+  - Coercion & Casting: `convert_s`, `convert_i`, `convert_u`, `convert_d`, `convert_b`, `coerce`, `coerce_a`, `coerce_b`, `coerce_i`, `coerce_d`, `coerce_s`, `coerce_u`, `coerce_o`.
   - Debug & PC Safety: `debug`, `debugline`, `debugfile` (operand consumers ensuring zero PC drift on debug DoABC builds).
 - **ECMA-262 & ActionScript 3 Coercion**:
   - Full ECMA-262 Abstract Equality (`==`, `!=`) implementing boolean-to-numeric coercion, string-to-numeric conversion, and strict IEEE 754 `NaN != NaN` semantics.
@@ -60,6 +60,7 @@ Directly executes the original DoABC instruction bytecode via an efficient C++ s
   - Strict numeric coercion (`toInt`, `toDouble`) with whitespace trimming, and `NaN` / `Infinity` protection.
   - Dynamic Object serialization (`toString()`) delegated to `callMethod("toString")` / `__toString` for precise `Dictionary` hashing and custom object representations.
 - **C++ Host Interop / Bridge**: Through the virtual base class `Avm2Object`, C++ hosts can expose variables, coordinates, game methods, and callbacks to the AS3 script environment with native performance.
+- **Custom String Equality Matcher (`setStringEqualityMatcher`)**: Enables seamless alias/canonical string matching inside bytecode comparisons (`==`, `===`), ideal for engines normalizing Flash animation timeline labels (e.g., matching `"超必杀"` and `"ultimate_skill"` transparently).
 - **Built-in Simulation & Standard Library**:
   - Native `Array` prototype methods (`indexOf`, `lastIndexOf`, `push`, `pop`, `shift`, `unshift`, `slice`, `splice`, `concat`, `join`, `reverse`, `sort`, `length`) with automatic numeric index synchronization (`arr[i] = val`).
   - Native `Object` prototype methods (`hasOwnProperty`, `toString`, `valueOf`).
@@ -177,11 +178,78 @@ avm2::Avm2Interpreter::getInstance().execute(
 std::cout << "Player final HP: " << player->hp << "\n";
 ```
 
+### Dynamic Custom Class Method Dispatcher
+
+```cpp
+avm2::Avm2Interpreter::getInstance().setCustomMethodDispatcher([](
+    std::shared_ptr<avm2::Avm2Object> targetObj,
+    const std::string& methodName,
+    const std::vector<avm2::Avm2Value>& args,
+    void* hostContext
+) -> avm2::Avm2Value {
+    if (!targetObj || methodName.empty()) return avm2::Avm2Value::undefined();
+
+    // Resolve closures stored in target properties
+    if (targetObj->hasProperty(methodName)) {
+        auto prop = targetObj->getProperty(methodName);
+        if (prop.isString() && prop.sVal.rfind("method_", 0) == 0) {
+            // Find and execute closure bytecode
+        }
+    }
+
+    // Resolve ClassName::MethodName or flat MethodName
+    std::string className = targetObj->getProperty("__className").toString();
+    // Lookup method in game character/host database and execute with targetObj as 'this'
+    return avm2::Avm2Value::undefined();
+});
+```
+
+### String Equality Hook (Animation Labels & Alias Matching)
+
+```cpp
+avm2::Avm2Interpreter::getInstance().setStringEqualityMatcher([](const std::string& a, const std::string& b) -> bool {
+    // Custom label matching or localization mapping
+    if (a == b) return true;
+    if ((a == "超必杀" && b == "ultimate_skill") || (a == "ultimate_skill" && b == "超必杀")) return true;
+    return false;
+});
+```
+
 ---
 
 ## Standalone Binary Cache Serialization Format
 
-For runtimes without SWF, the Constant Pool and Method Bodies can be serialized into a sequential cache binary:
+For runtimes without SWF, the Constant Pools and Method Bodies can be serialized into a sequential cache binary.
+
+### AVM3 Multi-Pool Format (Recommended)
+
+Complex fighters with multiple DoABC tags (multiple ActionScript classes/packages) use the `AVM3` multi-pool format:
+
+```
+[4 Byte] Magic: "AVM3" (0x334D5641)
+[2 Byte] Pool Count
+  Per Constant Pool:
+    [4 Byte] Int Count       -> [4 Byte * Count]  int32_t
+    [4 Byte] UInt Count      -> [4 Byte * Count]  uint32_t
+    [4 Byte] Double Count    -> [8 Byte * Count]  double
+    [4 Byte] String Count    -> [2 Byte Len + Data] strings
+    [4 Byte] Multiname Count -> [2 Byte Len + Data] multinames
+--- METHOD BODIES ---
+[2 Byte] Method Count
+  Per Method:
+    [2 Byte Len + Data] Method Name
+    [2 Byte] maxStack
+    [2 Byte] localCount
+    [2 Byte] initScopeDepth
+    [2 Byte] maxScopeDepth
+    [2 Byte] poolIdx
+    [4 Byte] Code Length
+    [N Byte] Raw Bytecode Buffer
+```
+
+### AVM2 Single-Pool Format (Legacy)
+
+For simple fighters with a single unified constant pool:
 
 ```
 [4 Byte] Magic: "AVM2" (0x324D5641)
@@ -221,6 +289,14 @@ This library has been tested and verified against real ActionScript 3 scripts fr
    - `changeDirectByAD()`: Real-time input reading of joystick/keyboard `$key.moveLEFT()` and `$key.moveRIGHT()`.
    - `customSlowDown()`: Frame slow-motion hit trigger.
    - `intoAction()`: Action state and hitstun override.
+
+3. **Flandre Scarlet**:
+   - `Render.I.addRenderFunc()`: High-frequency frame render hook execution for bullet hell projectile loops.
+   - Dynamic activation and MovieClip timeline callbacks.
+
+4. **Mamizou Futatsuiwa**:
+   - `newactivation` (0x53): Dynamic activation frame scopes and local variable captures for disguise summons.
+   - `constructprop` (0x4A): Instantiation of custom companion entities with automatic `__init__` constructor execution.
 
 ---
 

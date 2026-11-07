@@ -108,6 +108,9 @@ public:
     /* override ini di game host buat get/set/method custom */
     virtual Avm2Value getProperty(const std::string& name);
     virtual void setProperty(const std::string& name, const Avm2Value& val);
+    virtual bool hasProperty(const std::string& name) const {
+        return properties.find(name) != properties.end();
+    }
     virtual Avm2Value callMethod(const std::string& name, const std::vector<Avm2Value>& args, void* hostContext);
 
     /* buat MovieClip / Array dinamis */
@@ -157,6 +160,7 @@ struct Avm2MethodBody {
     uint16_t initScopeDepth = 0;
     uint16_t maxScopeDepth = 0;
     std::vector<uint8_t> code;
+    uint16_t poolIdx = 0; /* id pool constant AVM2/AVM3 */
 };
 
 /*
@@ -166,6 +170,22 @@ struct Avm2MethodBody {
 class Avm2Interpreter {
 public:
     static Avm2Interpreter& getInstance();
+
+    /* Delegate buat dispatch method bytecode custom ke objek dinamis (misal class GeneralAnimal::createYanWu) */
+    using CustomMethodDispatcherFn = std::function<Avm2Value(
+        std::shared_ptr<Avm2Object> targetObj,
+        const std::string& methodName,
+        const std::vector<Avm2Value>& args,
+        void* hostContext
+    )>;
+
+    void setCustomMethodDispatcher(CustomMethodDispatcherFn dispatcher);
+    CustomMethodDispatcherFn getCustomMethodDispatcher() const;
+
+    /* Hook matcher kesetaraan string (misal bvnAnimLabelsMatch untuk mencocokkan label animasi Flash vs kanonikal) */
+    using StringEqualityMatcherFn = std::function<bool(const std::string&, const std::string&)>;
+    void setStringEqualityMatcher(StringEqualityMatcherFn matcher);
+    StringEqualityMatcherFn getStringEqualityMatcher() const;
 
     /* Eksekusi bytecode method */
     Avm2Value execute(
@@ -179,6 +199,8 @@ public:
 private:
     Avm2Interpreter() = default;
     ~Avm2Interpreter() = default;
+    CustomMethodDispatcherFn m_customDispatcher = nullptr;
+    StringEqualityMatcherFn m_stringMatcher = nullptr;
 };
 
 } // namespace avm2

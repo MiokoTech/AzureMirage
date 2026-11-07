@@ -125,8 +125,17 @@ std::string Avm2Value::toString() const {
     }
 }
 
+static Avm2Interpreter::StringEqualityMatcherFn s_stringMatcher = nullptr;
+
 bool Avm2Value::equals(const Avm2Value& other) const {
-    if (type == other.type) return strictEquals(other);
+    if (type == other.type) {
+        if (type == Avm2Type::String) {
+            if (sVal == other.sVal) return true;
+            if (s_stringMatcher && s_stringMatcher(sVal, other.sVal)) return true;
+            return false;
+        }
+        return strictEquals(other);
+    }
     if (isNullOrUndefined() && other.isNullOrUndefined()) return true;
     /* ECMA-262 / AS3 Abstract Equality: boolean diconvert ke number dulu */
     if (type == Avm2Type::Bool) return Avm2Value::number(toDouble()).equals(other);
@@ -154,7 +163,11 @@ bool Avm2Value::strictEquals(const Avm2Value& other) const {
         case Avm2Type::Bool: return bVal == other.bVal;
         case Avm2Type::Int: return iVal == other.iVal;
         case Avm2Type::Double: return dVal == other.dVal;
-        case Avm2Type::String: return sVal == other.sVal;
+        case Avm2Type::String: {
+            if (sVal == other.sVal) return true;
+            if (s_stringMatcher && s_stringMatcher(sVal, other.sVal)) return true;
+            return false;
+        }
         case Avm2Type::Object:
         case Avm2Type::Array: return objVal == other.objVal;
     }
@@ -729,6 +742,35 @@ static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std
         int32_t ms = static_cast<int32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now - s_appStartTime).count());
         return Avm2Value::integer(ms);
     }
+    if (name == "getAngle" && args.size() >= 2) {
+        float disY = static_cast<float>(args[0].toDouble());
+        float disX = static_cast<float>(args[1].toDouble());
+        constexpr float kPi = 3.14159265358979323846f;
+        float deg = std::atan2(disX, disY) * (180.0f / kPi);
+        if (deg < 0.0f) deg += 360.0f;
+        return Avm2Value::number(static_cast<double>(deg));
+    }
+    if (name == "getQualifiedClassName") {
+        if (args.empty() || args[0].isNullOrUndefined()) return Avm2Value::string("null");
+        const auto& arg = args[0];
+        if (arg.type == Avm2Type::Object && arg.objVal) {
+            std::string str = arg.objVal->callMethod("toString", {}, hostContext).toString();
+            if (str.find("FighterMain") != std::string::npos || str.find("Fighter") != std::string::npos) {
+                return Avm2Value::string("net.play5d.game.bvn.fighter::FighterMain");
+            }
+            if (str.find("Assister") != std::string::npos) {
+                return Avm2Value::string("net.play5d.game.bvn.fighter::Assister");
+            }
+            if (str.find("Bullet") != std::string::npos) {
+                return Avm2Value::string("net.play5d.game.bvn.fighter::Bullet");
+            }
+            if (str.find("Attacker") != std::string::npos || str.find("Summon") != std::string::npos) {
+                return Avm2Value::string("net.play5d.game.bvn.fighter::FighterAttacker");
+            }
+            return Avm2Value::string("net.play5d.game.bvn.fighter::FighterMain");
+        }
+        return Avm2Value::string("Object");
+    }
     if (name == "escape" && !args.empty()) {
         const std::string& input = args[0].toString();
         std::string res;
@@ -758,11 +800,39 @@ static Avm2Value invokeMethod(Avm2Value& obj, const std::string& name, const std
         return Avm2Value::string(res);
     }
 
+    if (name == "trace") {
+        /* modder sering pake trace() buat print info attack / frame debugging */
+        return Avm2Value::undefined();
+    }
+
     if (obj.type == Avm2Type::Object && obj.objVal) {
-        return obj.objVal->callMethod(name, args, hostContext);
+        Avm2Value ret = obj.objVal->callMethod(name, args, hostContext);
+        if (!ret.isUndefined()) {
+            return ret;
+        }
+        /* kalo bukan method bawaan Array/Object, coba dispatch ke custom AS3 method (misal GeneralAnimal::createYanWu) */
+        auto dispatcher = Avm2Interpreter::getInstance().getCustomMethodDispatcher();
+        if (dispatcher) {
+            Avm2Value customRet = dispatcher(obj.objVal, name, args, hostContext);
+            if (!customRet.isUndefined()) {
+                return customRet;
+            }
+        }
+        return ret;
     }
     if (thisObj) {
-        return thisObj->callMethod(name, args, hostContext);
+        Avm2Value ret = thisObj->callMethod(name, args, hostContext);
+        if (!ret.isUndefined()) {
+            return ret;
+        }
+        auto dispatcher = Avm2Interpreter::getInstance().getCustomMethodDispatcher();
+        if (dispatcher) {
+            Avm2Value customRet = dispatcher(thisObj, name, args, hostContext);
+            if (!customRet.isUndefined()) {
+                return customRet;
+            }
+        }
+        return ret;
     }
     return Avm2Value::undefined();
 }
@@ -778,6 +848,23 @@ static thread_local std::vector<std::unique_ptr<Avm2ExecutionFrame>> s_avm2Frame
 Avm2Interpreter& Avm2Interpreter::getInstance() {
     static Avm2Interpreter s_inst;
     return s_inst;
+}
+
+void Avm2Interpreter::setCustomMethodDispatcher(CustomMethodDispatcherFn dispatcher) {
+    m_customDispatcher = std::move(dispatcher);
+}
+
+Avm2Interpreter::CustomMethodDispatcherFn Avm2Interpreter::getCustomMethodDispatcher() const {
+    return m_customDispatcher;
+}
+
+void Avm2Interpreter::setStringEqualityMatcher(StringEqualityMatcherFn matcher) {
+    m_stringMatcher = std::move(matcher);
+    s_stringMatcher = m_stringMatcher;
+}
+
+Avm2Interpreter::StringEqualityMatcherFn Avm2Interpreter::getStringEqualityMatcher() const {
+    return m_stringMatcher;
 }
 
 Avm2Value Avm2Interpreter::execute(
@@ -878,6 +965,26 @@ Avm2Value Avm2Interpreter::execute(
             case 0x02: /* nop */
             case 0x09: /* label */
                 break;
+
+            case 0x03: { /* throw */
+                pop(); /* pop exception object */
+                return Avm2Value::undefined();
+            }
+            case 0x04: { /* getsuper mn_idx */
+                uint32_t mnIdx = readU30();
+                Avm2Value recv = pop();
+                const std::string& propName = pool.getMultiname(mnIdx);
+                push(resolveProperty(recv, propName, thisObject));
+                break;
+            }
+            case 0x05: { /* setsuper mn_idx */
+                uint32_t mnIdx = readU30();
+                const std::string& propName = pool.getMultiname(mnIdx);
+                Avm2Value val = pop();
+                Avm2Value recv = pop();
+                assignProperty(recv, propName, val, thisObject);
+                break;
+            }
 
             case 0x08: { /* kill */
                 uint32_t r = readU30();
@@ -1126,9 +1233,24 @@ Avm2Value Avm2Interpreter::execute(
             }
             case 0x42: { /* construct arg_count */
                 uint32_t argCount = readU30();
+                std::vector<Avm2Value> cArgs(argCount);
+                for (int i = static_cast<int>(argCount) - 1; i >= 0; --i) cArgs[i] = pop();
+                Avm2Value ctorVal = pop();
+                auto obj = std::make_shared<Avm2Object>();
+                std::string ctorName = ctorVal.toString();
+                if (ctorName == "Array" || ctorName.find("Array") != std::string::npos) {
+                    /* note: new Array(a, b, c) di AS3 langsung ngisi item array */
+                    obj->m_arrayItems = cArgs;
+                }
+                push(Avm2Value::object(obj));
+                break;
+            }
+            case 0x43: { /* callmethod method_idx, arg_count */
+                readU30();
+                uint32_t argCount = readU30();
                 for (uint32_t i = 0; i < argCount; ++i) pop();
-                pop();
-                push(Avm2Value::object(std::make_shared<Avm2Object>()));
+                pop(); /* pop receiver */
+                push(Avm2Value::undefined());
                 break;
             }
             case 0x44: { /* callstatic method_id, arg_count */
@@ -1139,6 +1261,16 @@ Avm2Value Avm2Interpreter::execute(
                 push(Avm2Value::undefined());
                 break;
             }
+            case 0x45: { /* callsuper mn_idx, arg_count */
+                uint32_t mnIdx = readU30();
+                uint32_t argCount = readU30();
+                const std::string& methName = pool.getMultiname(mnIdx);
+                std::vector<Avm2Value> margs(argCount);
+                for (int i = static_cast<int>(argCount) - 1; i >= 0; --i) margs[i] = pop();
+                Avm2Value recv = pop();
+                push(invokeMethod(recv, methName, margs, thisObject, hostContext));
+                break;
+            }
             case 0x4a: { /* constructprop mn_idx, arg_count */
                 uint32_t mnIdx = readU30();
                 uint32_t argCount = readU30();
@@ -1147,7 +1279,10 @@ Avm2Value Avm2Interpreter::execute(
                 pop(); /* pop receiver */
                 const std::string& clsName = pool.getMultiname(mnIdx);
                 auto obj = std::make_shared<Avm2Object>();
-                if (clsName == "Point" || clsName.find("Point") != std::string::npos) {
+                if (clsName == "Array" || clsName.find("Array") != std::string::npos) {
+                    /* note: var arr:Array = [15, 22, 23, 24] dicompile ke constructprop Array, 4 */
+                    obj->m_arrayItems = cArgs;
+                } else if (clsName == "Point" || clsName.find("Point") != std::string::npos) {
                     obj->setProperty("x", cArgs.size() >= 1 ? cArgs[0] : Avm2Value::number(0.0));
                     obj->setProperty("y", cArgs.size() >= 2 ? cArgs[1] : Avm2Value::number(0.0));
                 } else if (clsName == "Rectangle" || clsName.find("Rectangle") != std::string::npos) {
@@ -1160,6 +1295,10 @@ Avm2Value Avm2Interpreter::execute(
                     obj->setProperty("__className", Avm2Value::string(clsName));
                     obj->setProperty("x", Avm2Value::number(0.0));
                     obj->setProperty("y", Avm2Value::number(0.0));
+                    auto dispatcher = Avm2Interpreter::getInstance().getCustomMethodDispatcher();
+                    if (dispatcher) {
+                        dispatcher(obj, "__init__", cArgs, hostContext);
+                    }
                 }
                 push(Avm2Value::object(obj));
                 break;
@@ -1182,11 +1321,24 @@ Avm2Value Avm2Interpreter::execute(
                 push(invokeMethod(obj, methName, margs, thisObject, hostContext));
                 break;
             }
-            case 0x4E: { /* callsupervoid mn_idx, arg_count */
-                readU30();
+            case 0x4D: { /* callinterface mn_idx, arg_count */
+                uint32_t mnIdx = readU30();
                 uint32_t argCount = readU30();
-                for (uint32_t i = 0; i < argCount; ++i) pop();
-                pop(); /* pop receiver */
+                const std::string& methName = pool.getMultiname(mnIdx);
+                std::vector<Avm2Value> margs(argCount);
+                for (int i = static_cast<int>(argCount) - 1; i >= 0; --i) margs[i] = pop();
+                Avm2Value recv = pop();
+                push(invokeMethod(recv, methName, margs, thisObject, hostContext));
+                break;
+            }
+            case 0x4E: { /* callsupervoid mn_idx, arg_count */
+                uint32_t mnIdx = readU30();
+                uint32_t argCount = readU30();
+                const std::string& methName = pool.getMultiname(mnIdx);
+                std::vector<Avm2Value> margs(argCount);
+                for (int i = static_cast<int>(argCount) - 1; i >= 0; --i) margs[i] = pop();
+                Avm2Value recv = pop();
+                invokeMethod(recv, methName, margs, thisObject, hostContext);
                 break;
             }
 
@@ -1211,6 +1363,7 @@ Avm2Value Avm2Interpreter::execute(
                 push(Avm2Value::object(arr));
                 break;
             }
+            case 0x53:   /* newactivation (dipakai compiler AS3 di Mamizou) */
             case 0x57: { /* newactivation (scope activation record) */
                 push(Avm2Value::object(std::make_shared<Avm2Object>()));
                 break;
@@ -1428,7 +1581,19 @@ Avm2Value Avm2Interpreter::execute(
                 break;
             }
             case 0x80: readU30(); break; /* coerce mn_idx */
+            case 0x81: { /* coerce_b */
+                if (!stack.empty()) stack.back() = Avm2Value::boolean(stack.back().toBool());
+                break;
+            }
             case 0x82: break; /* coerce_a */
+            case 0x83: { /* coerce_i */
+                if (!stack.empty()) stack.back() = Avm2Value::integer(stack.back().toInt());
+                break;
+            }
+            case 0x84: { /* coerce_d */
+                if (!stack.empty()) stack.back() = Avm2Value::number(stack.back().toDouble());
+                break;
+            }
             case 0x85: { /* coerce_s */
                 if (!stack.empty() && !stack.back().isNullOrUndefined()) {
                     stack.back() = Avm2Value::string(stack.back().toString());
@@ -1443,6 +1608,11 @@ Avm2Value Avm2Interpreter::execute(
                 pop(); /* pop class object */
                 break;
             }
+            case 0x88: { /* coerce_u */
+                if (!stack.empty()) stack.back() = Avm2Value::integer(static_cast<int32_t>(static_cast<uint32_t>(stack.back().toInt())));
+                break;
+            }
+            case 0x89: break; /* coerce_o */
 
             /* Math & logic */
             case 0x90: push(Avm2Value::number(-pop().toDouble())); break; /* negate */
