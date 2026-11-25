@@ -10,6 +10,12 @@
 
 ---
 
+<p align="center">
+  <img src="https://count.getloli.com/@MiokoTech?theme=booru-lewd&padding=6&offset=0&align=bottom&scale=1.1&pixelated=1&darkmode=auto" alt="Visitor Count" />
+</p>
+
+---
+
 ## License & Distribution
 
 - **Azure Mirage: Chord of Lyra** is distributed as **free, non-commercial, closed-source** software.
@@ -21,12 +27,6 @@
   - SWF fighter core combat logic (`CORE_KernelLogic`) is used on a closed-source basis with direct permission from the author, under the condition that this project remains **entirely free**, **non-commercial**, links to the original repository, and does **not** redistribute any original SWF binaries.
 - **Ikemen-GO** ([https://github.com/ikemen-engine/Ikemen-GO](https://github.com/ikemen-engine/Ikemen-GO)) — MIT License (`common.cmd`, `common.const`, `common.air`, and M.U.G.E.N 1.0/1.1 compatibility references).
 - See [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) for complete third-party license texts and attributions.
-
----
-
-<p align="center">
-  <img src="https://count.getloli.com/@MiokoTech?theme=booru-lewd&padding=6&offset=0&align=bottom&scale=1.1&pixelated=1&darkmode=auto" alt="Visitor Count" />
-</p>
 
 
 <p align="center">
