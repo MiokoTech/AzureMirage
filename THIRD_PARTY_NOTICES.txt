@@ -1,0 +1,240 @@
+================================================================================
+THIRD-PARTY NOTICES & LICENSE ATTRIBUTIONS
+Azure Mirage: Chord of Lyra
+Copyright (c) 2026 MiokoTech
+================================================================================
+
+DISTRIBUTION SCOPE
+------------------
+1. Azure Mirage: Chord of Lyra (Android Application)
+   Free, non-commercial, closed-source software. All Rights Reserved.
+   All original source code, UI assets, audio, and swf_common.ams are Copyright (c) 2026 MiokoTech.
+   This distribution does not bundle any Elecbyte M.U.G.E.N executables, data files, or sample content.
+   This distribution does not bundle any original Bleach vs. Naruto (BVN) SWF binaries.
+   SWF fighter core combat logic (CORE_KernelLogic) is used on a closed-source basis under direct
+   written permission from 5DPLAY Game Studio for free, non-commercial distribution only.
+
+2. Standalone AVM2 Virtual Machine (Open-Source Module)
+   Published separately under the MIT License at:
+   https://github.com/MiokoTech/AzureMirage
+
+
+SUMMARY OF THIRD-PARTY COMPONENTS
+----------------------------------------
+Component                
+-----------------------	
+1. 5DPLAY Game Studio (BleachVsNaruto)
+2. Ikemen-GO
+3. stb_image.h
+4. dr_mp3.h & minimp3
+5. Android NDK Glue
+6. Barlow Condensed, Cormorant Garamond & Noto Sans CJK SC
+
+
+Files / Scope & License
+---------------------------------
+1. CORE_KernelLogic fighter logic - (Author Permission: Closed-source, Free & Non-Commercial)
+2. common.cmd, common.const, common.air, common1.cns.zss & ZSS/MUGEN compat - (MIT License)
+3. stb_image.h - (MIT / Public Domain)
+4. dr_mp3.h - (MIT-0 / Unlicense / CC0 1.0)
+5. android_native_app_glue.h - (Apache License 2.0)
+6. font_sans.ttf, font_serif.ttf, font_cjk.ttf - (SIL Open Font License 1.1)
+
+================================================================================
+1. 5DPLAY GAME STUDIO — BLEACHVSNARUTO (Author Written Permission)
+================================================================================
+Source:     https://github.com/5DPLAY-Game-Studio/BleachVsNaruto
+Copyright:  Copyright (C) 2021-2026, 5DPLAY Game Studio
+Components: SWF fighter core combat logic from CORE_KernelLogic
+
+--- Licensing & Permission Terms ---
+
+While the upstream BleachVsNaruto repository is published under the GNU General
+Public License v3.0 (GPL-3.0), the author has granted direct written permission
+for Azure Mirage: Chord of Lyra to use code from the project on a closed-source
+basis under the following conditions:
+  - The final product remains entirely free of charge.
+  - The final product is strictly non-commercial and is not used for any
+    commercial purposes.
+  - A link to the original repository is included within the project:
+    https://github.com/5DPLAY-Game-Studio/BleachVsNaruto
+  - Original SWF binaries from the BleachVsNaruto project are NOT included or
+    redistributed in this project (only code and materials permitted from the
+    FlashSrc directory, if applicable).
+
+
+================================================================================
+2. IKEMEN-GO (MIT License)
+================================================================================
+Source:     https://github.com/ikemen-engine/Ikemen-GO
+            https://github.com/ikemen-engine/modules
+Components: app/src/main/assets/common.cmd
+            app/src/main/assets/common.const
+            app/src/main/assets/common.air
+            (and ZSS / MUGEN 1.0 & 1.1 compatibility references; if you replace
+            common1.cns.zss with Ikemen-GO's upstream data/common1.cns.zss, it
+            is also covered by this MIT License)
+
+--- Verbatim Original License Text (Ikemen-GO / LICENCE.txt) ---
+
+MIT License
+
+Copyright (c) 2016 Suehiro
+Copyright (c) 2018 K4thos, NeatUnsou, ShinLucho
+Copyright (c) 2019 Daniel Porto, Gacel, Nikolay Griva
+Copyright (c) 2020 Wintermourn
+Copyright (c) 2021 Amavect, BwdYeti, Eiton, Super, two4teezee
+Copyright (c) 2022 fantasma, GaryCXJk, PotS, Sam Hocevar, Wreq!
+Copyright (c) 2023 Foobs, RollinJay, Wftk, wily-coyote
+Copyright (c) 2024 Jesuszilla, Kasasagi, Orange-Dolphin, Rakíel
+Copyright (c) 2025 Alceris, Kase, Leon Kasovan
+Copyright (c) 2026 Kokorz
+Copyright (c) 2016-2026 Ikemen GO contributors
+Copyright (c) 2023 Ikemen GO Engine Repositories
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+The MIT License applies to the Ikemen GO engine and the scripts in this repo.
+
+
+================================================================================
+3. STB_IMAGE (MIT License / Public Domain)
+================================================================================
+Source:     https://github.com/nothings/stb
+Component:  src/render/stb_image.h
+
+--- Verbatim Original License Text ---
+
+This software is available under 2 licenses -- choose whichever you prefer.
+
+ALTERNATIVE A - MIT License
+Copyright (c) 2017 Sean Barrett
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+ALTERNATIVE B - Public Domain (www.unlicense.org)
+This is free and unencumbered software released into the public domain.
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
+software, either in source code form or as a compiled binary, for any purpose,
+commercial or non-commercial, and by any means.
+
+
+================================================================================
+4. DR_MP3 & MINIMP3 (Public Domain / MIT No Attribution / CC0 1.0)
+================================================================================
+Source:     https://github.com/mackron/dr_libs
+            https://github.com/lieff/minimp3
+Component:  src/audio/dr_mp3.h
+
+--- Verbatim Original License Text ---
+
+ALTERNATIVE 1 - Public Domain (www.unlicense.org)
+This is free and unencumbered software released into the public domain.
+For more information, please refer to <http://unlicense.org/>
+
+ALTERNATIVE 2 - MIT No Attribution
+Copyright 2023 David Reid
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+minimp3 (https://github.com/lieff/minimp3):
+To the extent possible under law, the author(s) have dedicated all copyright
+and related and neighboring rights to this software to the public domain
+worldwide. This software is distributed without any warranty.
+See <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+
+================================================================================
+5. ANDROID NATIVE APP GLUE (Apache License, Version 2.0)
+================================================================================
+Source:     Android NDK / The Android Open Source Project
+Component:  src/platform/android/android_native_app_glue.h
+
+--- Verbatim Original License Text ---
+
+Copyright (C) 2010 The Android Open Source Project
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+================================================================================
+6. FONTS — BARLOW CONDENSED, CORMORANT GARAMOND & NOTO SANS CJK SC (SIL OFL 1.1)
+================================================================================
+Components: app/src/main/assets/fonts/font_sans.ttf  (Barlow Condensed Medium)
+            app/src/main/assets/fonts/font_serif.ttf (Cormorant Garamond Light)
+            app/src/main/assets/fonts/font_cjk.ttf   (Noto Sans CJK SC)
+
+Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow)
+Copyright 2015 The Cormorant Project Authors (https://github.com/CatharsisFonts/Cormorant)
+Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source' / Google LLC (https://github.com/notofonts/noto-cjk)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is available with a FAQ at: https://openfontlicense.org
+
+
+================================================================================
+7. EXTERNAL USER-LOADED CONTENT & TRADEMARK DISCLAIMER
+================================================================================
+Azure Mirage: Chord of Lyra is a general-purpose 2D fighting game engine
+supporting external user-supplied content (such as MUGEN-format characters,
+stages, audio, and SWF/AVM2 fighter packages).
+
+All third-party characters, sprites, sounds, music, and stage files loaded by
+the user at runtime remain the sole intellectual property of their respective
+creators and copyright holders. MiokoTech claims no ownership over, and is not
+affiliated with, any third-party intellectual property loaded by end users.
